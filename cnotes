@@ -211,18 +211,18 @@ case "$operation" in
       fi
       match=$match,$day
       for file in $(find $working_dir -maxdepth 1 -type f); do
-        if [ "$(grep -e $week_month$day$ -e $week_month$day[^0-9] $file)" != "" ]; then
+        if [ "$(grep $week_month$day$ $file)" != "" ]; then
           echo "> $(basename $file)"
-          grep -e $week_month$day$ -e $week_month$day[^0-9] $file
+          grep $week_month$day$ $file
         fi
       done
     done
     match="$(sed -e 's/^,/[/g' <<< $match)]"
     echo -e "\nUnmatched:"
     for file in $(find $working_dir -maxdepth 1 -type f); do
-      if [ "$(grep -v -e $week_month$match$ -e $week_month$match[^0-9] $file)" != "" ]; then
+      if [ "$(grep -v $week_month$match$ $file)" != "" ]; then
         echo "> $(basename $file)"
-        grep -v -e $week_month$match$ -e $week_month$match[^0-9] $file
+        grep -v $week_month$match$ $file
       fi
     done
     ;;
