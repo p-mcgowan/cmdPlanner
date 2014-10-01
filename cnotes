@@ -1,3 +1,5 @@
+#add -d, replace str with other_str
+#update -o, print excluded, increase speed
 #!/bin/bash
 #
 # Basic scheduling program
@@ -119,12 +121,11 @@ case "$operation" in
     fi
     ;;
   "list" | "-l")
-  #  List - Prints contents of text files in working directory
+  # List - Prints contents of text files in working directory
     find . -maxdepth 1 -type f -exec echo -n "> " \; -exec basename {} \; -exec cat {} \;
     ;;
   "undo" | "-u")
-  #  Undo - Restores last deleted line to file
-  #  Requires file to append to ($course => $file)
+  #does stuff  
     if [ "$file" != "" ]; then
       if [ "$(cat $working_dir/deleted/lastline 2>/dev/null)" != "" ]; then
         cat $working_dir/deleted/lastline >> $file
@@ -139,9 +140,8 @@ case "$operation" in
     fi
     ;;
   "rest" | "-R")
-  #  Restore - Replaces text file in deleted/, swapping it with existing
-  #+ one in working directory.
-  #  Requires input file ($course => $file)
+  # Restore - Replaces text file in deleted/, swapping it with existing one in working directory
+  # Requires input file ($course => $file)
     if [ "$file" != "" ]; then
       if [ -f $working_dir/deleted/$file ]; then
         mv $working_dir/deleted/$file $working_dir/tmp
@@ -183,42 +183,51 @@ case "$operation" in
     fi
     ;;
   "find" | "-f")
-  #  Find - Seaches files for matching string
-  #  Requires string to search for ($course)
+  # Find - Seaches files for matching string
+  # Requires string to search for ($course)
     if [ "$course" != "" ]; then
-      find $working_dir -maxdepth 1 -type f \( -exec grep -q $course {} \; \
-      -exec echo -n "> " \; -exec basename {} \; -exec grep $course {} \; \)
+      find $working_dir -maxdepth 1 -type f \( -exec grep -q $course {} \; -exec echo -n "> " \; -exec basename {} \; -exec grep $course {} \; \)
     else
       echo Missing argument\(s\)
       bash $0
     fi
     ;;
   "sort" | "-o")
-  #  Sort - Prints file lines containing dates ranging from todays date +[0,24] in order
-  #  Requires (optional) number of days to iterate through and search for ($course)
+  # Sort - Prints file lines containing dates ranging from todays date +[0,24] in order
+  # Requires (optional) number of days to iterate through and search for ($course)
     week_month="[M,T,W,R,F,S,U][j,f,m,a,my,j,jl,ag,s,o,n,d]"
     if [ "$course" == "" ] || [ "$course" -gt "24" ] || [ "$course" -lt "0" ]; then
       length=7
     else
       length=$course
     fi
+    match=
     days_this_month=$(cal |egrep -v [a-z] |wc -w)
-    for  (( i=$(date +%d); i<=$(date +%d)+$length; i++ )) do
+    for (( i=$(date +%d); i<=$(date +%d)+$length; i++ )) do
       if [ $i -gt $days_this_month ]; then
-        filter=$(( $i - $days_this_month ))
+        day=$(( $i - $days_this_month ))
       else
-        filter=$i
+        day=$i
       fi
+      match=$match,$day
       for file in $(find $working_dir -maxdepth 1 -type f); do
-        if [ "$(grep $week_month$filter $file |grep -v $week_month$filter[0-9])" != "" ]; then
-          echo "> $(basename $file)" &&\
-          grep "$week_month$filter" $file |grep -v "$week_month$filter[0-9]"
+        if [ "$(grep -e $week_month$day$ -e $week_month$day[^0-9] $file)" != "" ]; then
+          echo "> $(basename $file)"
+          grep -e $week_month$day$ -e $week_month$day[^0-9] $file
         fi
       done
     done
+    match="$(sed -e 's/^,/[/g' <<< $match)]"
+    echo -e "\nUnmatched:"
+    for file in $(find $working_dir -maxdepth 1 -type f); do
+      if [ "$(grep -v -e $week_month$match$ -e $week_month$match[^0-9] $file)" != "" ]; then
+        echo "> $(basename $file)"
+        grep -v -e $week_month$match$ -e $week_month$match[^0-9] $file
+      fi
+    done
     ;;
   "help" | "-h")
-  #  Help - Prints info on operation usage
+  # Help - Prints info on operation usage
     echo "Usage: cnotes [-acehopPrRu] [-rl] course args addargs"
     echo "options:"
     echo " push, -p  - append args to course"
@@ -236,7 +245,7 @@ case "$operation" in
     echo " help, -h  - show this menu"
     ;;
   * | "")
-  #  Default - Prints minimal usage information
+  # Default - Prints minimal usage information
     echo "Usage: cnotes [-acehpPrRu] course args addargs"
     echo "Type cnotes help or cnotes -h for more info"
     ;;
