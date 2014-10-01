@@ -23,3 +23,11 @@ Upcoming:
   \- Restructure file storage, possibly consolidating files into one.  
   \- Implementing config files and optional file creating and deletion file for more reusable implementation.  
 
+###v1.0.1 - Oct, 2014
+Hotfix - sort, -o duplicate output in unmatched  
+Changed:  
+  \- sort, -o no longer prints duplicates, but requires date format at end of line  
+Upcoming:  
+  \- Restructure file storage, possibly consolidating files into one.  
+  \- Implementing config files and optional file creating and deletion file for more reusable implementation.  
+
