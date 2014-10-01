@@ -15,7 +15,7 @@ Upcoming:
   - Restructure file storage, possibly consolidating files into one.  
   - Implementing config files and optional file creating and deletion file for more reusable implementation.  
   
-###v1.0.0
+###v1.0.0 - Sept, 2014
 Finalization patches, implementations. Released as version 1.0.0  
 Added:  
   - sort, -o prints unmatched strings, minor optimizations made.  
