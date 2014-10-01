@@ -1,8 +1,6 @@
-#add -d, replace str with other_str
-#update -o, print excluded, increase speed
 #!/bin/bash
 #
-# Basic scheduling program
+#  Basic scheduling program
 working_dir=~/coursenotes
 mkdir -p $working_dir/deleted
 cd $working_dir
@@ -16,7 +14,7 @@ message="$*"
 shift
 addargs="$*"
 file=
-# Course selection for in/output file
+#  Course selection for in/output file
 case "$course" in
   "cs" | "221")
     file=CPSC221
@@ -43,7 +41,7 @@ case "$course" in
     file=
     ;;
 esac
-# Operation selection
+#  Operation selection
 case "$operation" in
   "push" | "-p")
   #  Push - Sends input to text file
@@ -121,11 +119,12 @@ case "$operation" in
     fi
     ;;
   "list" | "-l")
-  # List - Prints contents of text files in working directory
+  #  List - Prints contents of text files in working directory
     find . -maxdepth 1 -type f -exec echo -n "> " \; -exec basename {} \; -exec cat {} \;
     ;;
   "undo" | "-u")
-  #does stuff  
+  #  Undo - Appends most recent deletion to file
+  #  Requires file ($course => $file)  
     if [ "$file" != "" ]; then
       if [ "$(cat $working_dir/deleted/lastline 2>/dev/null)" != "" ]; then
         cat $working_dir/deleted/lastline >> $file
@@ -140,8 +139,8 @@ case "$operation" in
     fi
     ;;
   "rest" | "-R")
-  # Restore - Replaces text file in deleted/, swapping it with existing one in working directory
-  # Requires input file ($course => $file)
+  #  Restore - Replaces text file in deleted/, swapping it with existing one in working directory
+  #  Requires input file ($course => $file)
     if [ "$file" != "" ]; then
       if [ -f $working_dir/deleted/$file ]; then
         mv $working_dir/deleted/$file $working_dir/tmp
@@ -183,8 +182,8 @@ case "$operation" in
     fi
     ;;
   "find" | "-f")
-  # Find - Seaches files for matching string
-  # Requires string to search for ($course)
+  #  Find - Seaches files for matching string
+  #  Requires string to search for ($course)
     if [ "$course" != "" ]; then
       find $working_dir -maxdepth 1 -type f \( -exec grep -q $course {} \; -exec echo -n "> " \; -exec basename {} \; -exec grep $course {} \; \)
     else
@@ -193,8 +192,8 @@ case "$operation" in
     fi
     ;;
   "sort" | "-o")
-  # Sort - Prints file lines containing dates ranging from todays date +[0,24] in order
-  # Requires (optional) number of days to iterate through and search for ($course)
+  #  Sort - Prints file lines containing dates ranging from todays date +[0,24] in order
+  #  Requires (optional) number of days to iterate through and search for ($course)
     week_month="[M,T,W,R,F,S,U][j,f,m,a,my,j,jl,ag,s,o,n,d]"
     if [ "$course" == "" ] || [ "$course" -gt "24" ] || [ "$course" -lt "0" ]; then
       length=7
@@ -227,7 +226,7 @@ case "$operation" in
     done
     ;;
   "help" | "-h")
-  # Help - Prints info on operation usage
+  #  Help - Prints info on operation usage
     echo "Usage: cnotes [-acehopPrRu] [-rl] course args addargs"
     echo "options:"
     echo " push, -p  - append args to course"
@@ -245,7 +244,7 @@ case "$operation" in
     echo " help, -h  - show this menu"
     ;;
   * | "")
-  # Default - Prints minimal usage information
+  #  Default - Prints minimal usage information
     echo "Usage: cnotes [-acehpPrRu] course args addargs"
     echo "Type cnotes help or cnotes -h for more info"
     ;;
