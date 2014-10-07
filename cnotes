@@ -238,7 +238,7 @@ case "$operation" in
     fi
     echo -e "\nUnmatched:"
     cat tmp
-    #rm tmp
+    rm tmp
     ;;
   "help" | "-h")
   # Help - Prints info on operation usage
