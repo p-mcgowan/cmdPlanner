@@ -31,3 +31,12 @@ Upcoming:
   \- Restructure file storage, possibly consolidating files into one.  
   \- Implementing config files and optional file creating and deletion file for more reusable implementation.  
 
+###v1.0.2 - Oct, 2014
+Fix - sort does not print duplicates  
+Changed:  
+  \- sort actually no longer prints duplicates.  
+Upcoming:  
+  \- Implementing config files and optional file creating and deletion file for more reusable implementation.  
+Notes:  
+  \- Restructured pushed back, may revisit if necessary.  
+
