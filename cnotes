@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Basic scheduling program
+# Basic scheduling program
 working_dir=~/coursenotes
 mkdir -p $working_dir/deleted
 cd $working_dir
@@ -14,7 +14,7 @@ message="$*"
 shift
 addargs="$*"
 file=
-#  Course selection for in/output file
+# Course selection for in/output file
 case "$course" in
   "cs" | "221")
     file=CPSC221
@@ -41,7 +41,7 @@ case "$course" in
     file=
     ;;
 esac
-#  Operation selection
+# Operation selection
 case "$operation" in
   "push" | "-p")
   #  Push - Sends input to text file
@@ -69,16 +69,20 @@ case "$operation" in
       fi
     fi
     ;;
-  "rm" | "del")
+  "-D" | "del")
   #  Delete - Removes entire contents of input file and replaces with empty one.
   #+ Stores file in deleted/ until next deletion operation.
   #  Requires input file ($course => $file)
     if [ "$file" != "" ]; then
-      mv $file deleted/
-      touch $file
-      echo Sent $file\
-      to $working_dir/deleted/$file
-      bash $0 list
+      echo -n "Really delete $file? [Y/n]: "
+      read confirm
+      if [ "$confirm" == "y" ] || [ "$confirm" == "Y" ]; then
+        mv $file deleted/
+        touch $file
+        echo Sent $file\
+        to $working_dir/deleted/$file
+        bash $0 list
+      fi
     else
       echo Invalid format
       bash $0
@@ -86,7 +90,7 @@ case "$operation" in
     ;;
   "clear" | "-c")
   #  Clear - Removes a single line from file, determined by the first string
-  #+ containing input string
+  #+ containing input substring
   #  Requires input file ($course => $file) and substring ($message)
     if [ "$message" != "" ] && [ "$file" != "" ]; then
       cat $file |grep "$message" >$working_dir/deleted/lastline &&
@@ -119,12 +123,12 @@ case "$operation" in
     fi
     ;;
   "list" | "-l")
-  #  List - Prints contents of text files in working directory
+  # List - Prints contents of text files in working directory
     find . -maxdepth 1 -type f -exec echo -n "> " \; -exec basename {} \; -exec cat {} \;
     ;;
   "undo" | "-u")
-  #  Undo - Appends most recent deletion to file
-  #  Requires file ($course => $file)  
+  #  Undo - restores last deleted line to a file
+  #  Requires input file ($course ==> $file) 
     if [ "$file" != "" ]; then
       if [ "$(cat $working_dir/deleted/lastline 2>/dev/null)" != "" ]; then
         cat $working_dir/deleted/lastline >> $file
@@ -139,8 +143,8 @@ case "$operation" in
     fi
     ;;
   "rest" | "-R")
-  #  Restore - Replaces text file in deleted/, swapping it with existing one in working directory
-  #  Requires input file ($course => $file)
+  # Restore - Replaces text file in deleted/, swapping it with existing one in working directory
+  # Requires input file ($course => $file)
     if [ "$file" != "" ]; then
       if [ -f $working_dir/deleted/$file ]; then
         mv $working_dir/deleted/$file $working_dir/tmp
@@ -182,8 +186,8 @@ case "$operation" in
     fi
     ;;
   "find" | "-f")
-  #  Find - Seaches files for matching string
-  #  Requires string to search for ($course)
+  # Find - Seaches files for matching string
+  # Requires string to search for ($course)
     if [ "$course" != "" ]; then
       find $working_dir -maxdepth 1 -type f \( -exec grep -q $course {} \; -exec echo -n "> " \; -exec basename {} \; -exec grep $course {} \; \)
     else
@@ -192,60 +196,71 @@ case "$operation" in
     fi
     ;;
   "sort" | "-o")
-  #  Sort - Prints file lines containing dates ranging from todays date +[0,24] in order
-  #  Requires (optional) number of days to iterate through and search for ($course)
+  # Sort - Prints file lines containing dates ranging from todays date +[0,24] in order
+  # Requires (optional) number of days to iterate through and search for ($course)
     week_month="[M,T,W,R,F,S,U][j,f,m,a,my,j,jl,ag,s,o,n,d]"
     if [ "$course" == "" ] || [ "$course" -gt "24" ] || [ "$course" -lt "0" ]; then
       length=7
     else
       length=$course
     fi
-    match=
     days_this_month=$(cal |egrep -v [a-z] |wc -w)
+    for i in $(find $working_dir -maxdepth 1 -type f |grep -v tmp); do
+      echo "> $(basename $i)" >>tmp
+      cat $i >>$working_dir/tmp
+    done
     for (( i=$(date +%d); i<=$(date +%d)+$length; i++ )) do
       if [ $i -gt $days_this_month ]; then
         day=$(( $i - $days_this_month ))
       else
         day=$i
       fi
-      match=$match,$day
-      for file in $(find $working_dir -maxdepth 1 -type f); do
+      for file in $(find $working_dir -maxdepth 1 -type f |grep -v tmp |grep -v found); do
         if [ "$(grep $week_month$day$ $file)" != "" ]; then
-          echo "> $(basename $file)"
+          echo  "> $(basename $file)"
           grep $week_month$day$ $file
+          for j in $(grep $week_month$day$ $file); do
+            sed -i /$j/d $working_dir/tmp
+          done
         fi
       done
     done
-    match="$(sed -e 's/^,/[/g' <<< $match)]"
-    echo -e "\nUnmatched:"
-    for file in $(find $working_dir -maxdepth 1 -type f); do
-      if [ "$(grep -v $week_month$match$ $file)" != "" ]; then
-        echo "> $(basename $file)"
-        grep -v $week_month$match$ $file
+    lastline=
+    while read line
+    do
+      if [ "$(echo $line |grep \>)" != "" ] && [ "$(echo $lastline |grep \>)" != "" ]; then
+        sed -i "/$lastline/d" tmp 
       fi
-    done
+      lastline=$line
+    done < tmp 
+    if [ "$(echo $lastline |grep \>)" != "" ]; then
+      sed -i "/$lastline/d" tmp 
+    fi
+    echo -e "\nUnmatched:"
+    cat tmp
+    #rm tmp
     ;;
   "help" | "-h")
-  #  Help - Prints info on operation usage
-    echo "Usage: cnotes [-acehopPrRu] [-rl] course args addargs"
+  # Help - Prints info on operation usage
+    echo "Usage: cnotes [-acDfhopPrRu] [-rl] course args addargs"
     echo "options:"
-    echo " push, -p  - append args to course"
-    echo " pull, -P  - read from course or print all with no course"
-    echo " list, -l  - print all course files"
-    echo " clear, -c - delete first line containing args from course, temporarily storing it in working_dir/deleted/lastline"
-    echo " add, -a   - append addargs to first line containing args in course"
-    echo " rm, del   - delete course file, temporarily storing it in working_dir/deleted/"    
-    echo " undo, -u  - append most recently cleared line to course"
-    echo " rest, -R  - swap deleted course file with one in working_dir/deleted"
-    echo " repl, -rl - replace first line containing args with addargs"
-    echo " rep, -r   - replace first line occurence of args with addargs"
-    echo " find, -f  - print file lines containing args"
-    echo " sort, -o  - print file lines in order containing todays date + args (default 7)"
-    echo " help, -h  - show this menu"
+    echo " -p, push  - append args to course"
+    echo " -P, pull  - read from course or print all with no course"
+    echo " -l, list  - print all course files"
+    echo " -c, clear - delete first line containing args from course, temporarily storing it in working_dir/deleted/lastline"
+    echo " -a, add   - append addargs to first line containing args in course"
+    echo " -D, del   - delete course file, temporarily storing it in working_dir/deleted/"    
+    echo " -u, undo  - append most recently cleared line to course"
+    echo " -R, rest  - swap deleted course file with one in working_dir/deleted"
+    echo " -rl, repl - replace first line containing args with addargs"
+    echo " -r, rep   - replace first line occurence of args with addargs"
+    echo " -f, find  - print file lines containing args"
+    echo " -o, sort  - print file lines in order containing todays date + args (default 7)"
+    echo " -h, help  - show this menu"
     ;;
   * | "")
-  #  Default - Prints minimal usage information
-    echo "Usage: cnotes [-acehpPrRu] course args addargs"
+  # Default - Prints minimal usage information
+    echo "Usage: cnotes [-acDfhpPrRu] [-rl] course args addargs"
     echo "Type cnotes help or cnotes -h for more info"
     ;;
 esac
