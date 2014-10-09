@@ -1,3 +1,20 @@
+###v1.0.3 - Oct, 2014
+Fix - Octal numbers in date (ie. 08) caused errors  
+Changed:  
+  \- Slightly tweaked sort for loop  
+Upcoming:  
+  \- Implementing config files and optional file creating and deletion file for more reusable implementation.  
+  \- Possibly implementing a count for a more verbose search record  
+
+###v1.0.2 - Oct, 2014
+Fix - sort does not print duplicates  
+Changed:  
+  \- sort actually no longer prints duplicates.  
+Upcoming:  
+  \- Implementing config files and optional file creating and deletion file for more reusable implementation.  
+Notes:  
+  \- Restructure pushed back, may revisit if necessary.  
+
 ###v1.0.1 - Oct, 2014
 Hotfix - sort, -o duplicate output in unmatched  
 Changed:  
