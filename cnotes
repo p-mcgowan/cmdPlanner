@@ -209,7 +209,7 @@ case "$operation" in
       echo "> $(basename $i)" >>tmp
       cat $i >>$working_dir/tmp
     done
-    for (( i=$(date +%d); i<=$(date +%d)+$length; i++ )) do
+    for (( i=`expr $(date +%d) + 0`; i<=`expr $(date +%d) + 0`+$length; i++ )); do
       if [ $i -gt $days_this_month ]; then
         day=$(( $i - $days_this_month ))
       else
