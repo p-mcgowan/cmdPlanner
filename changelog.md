@@ -38,5 +38,13 @@ Changed:
 Upcoming:  
   \- Implementing config files and optional file creating and deletion file for more reusable implementation.  
 Notes:  
-  \- Restructured pushed back, may revisit if necessary.  
+  \- Restructure pushed back, may revisit if necessary.  
+
+###v1.0.3 - Oct, 2014
+Fix - Octal numbers in date (ie. 08) caused errors  
+Changed:  
+  \- Slightly tweaked sort for loop  
+Upcoming:  
+  \- Implementing config files and optional file creating and deletion file for more reusable implementation.  
+  \- Possibly implementing a count for a more verbose search record  
 
