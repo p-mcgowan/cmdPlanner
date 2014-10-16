@@ -219,8 +219,8 @@ case "$operation" in
         if [ "$(grep $week_month$day$ $file)" != "" ]; then
           echo  "> $(basename $file)"
           grep $week_month$day$ $file
-          for j in $(grep $week_month$day$ $file); do
-            sed -i /$j/d $working_dir/tmp
+          for j in "$(grep $week_month$day$ $file)"; do
+            sed -i /"$j"/d $working_dir/tmp
           done
         fi
       done
