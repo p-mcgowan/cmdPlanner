@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+#tt
 # Basic scheduling program
 working_dir=~/coursenotes
 mkdir -p $working_dir/deleted
