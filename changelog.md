@@ -1,3 +1,10 @@
+###v1.0.2 - Oct, 2014
+Fix - Unmatched not printing certain strings  
+Changed:  
+  \- Added quotes around grep cmd in sort for whole string  
+Upcoming:  
+  \- Implementing config files and optional file creating and deletion file for more reusable implementation.  
+  \- Possibly implementing a count for a more verbose search record  
 ###v1.0.3 - Oct, 2014
 Fix - Octal numbers in date (ie. 08) caused errors  
 Changed:  
