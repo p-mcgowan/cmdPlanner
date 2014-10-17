@@ -1,7 +1,7 @@
 ###v1.0.6 - Oct, 2014
 Fix - clear was not deleting lines with spaces, added quotes  
 Changed:  
-  \- Quick fix - added quotes around message to grep for in clear, -c
+  \- Quick fix - added quotes around message to grep for in clear, -c  
 Upcoming:  
   \- Implementing config files and optional file creating and deletion file for more reusable implementation.  
   \- Possibly implementing a count for a more verbose search record  
