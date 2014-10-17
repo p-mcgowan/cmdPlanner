@@ -94,7 +94,7 @@ case "$operation" in
   #  Requires input file ($course => $file) and substring ($message)
     if [ "$message" != "" ] && [ "$file" != "" ]; then
       cat $file |grep "$message" >$working_dir/deleted/lastline &&
-      sed -i "/$(grep -m 1 $message $file)/d" $file &&
+      sed -i "/$(grep -m 1 "$message" $file)/d" $file &&
       echo Deleted \'$(cat $working_dir/deleted/lastline)\'\
       from $file &&
       bash $0 pull $course ||
