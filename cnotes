@@ -215,13 +215,15 @@ case "$operation" in
       else
         day=$i
       fi
-      for file in $(find $working_dir -maxdepth 1 -type f |grep -v tmp |grep -v found); do
+      for file in $(find $working_dir -maxdepth 1 -type f |grep -v tmp); do
         if [ "$(grep $week_month$day$ $file)" != "" ]; then
           echo  "> $(basename $file)"
-          grep $week_month$day$ $file
-          for j in "$(grep $week_month$day$ $file)"; do
-            sed -i /"$j"/d $working_dir/tmp
-          done
+          grep $week_month$day$ $file |tee del
+          while read line; do
+            #echo -$line
+            sed -i /"$line"/d $working_dir/tmp
+          done <del
+          rm del
         fi
       done
     done
