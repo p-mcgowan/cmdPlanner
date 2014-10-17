@@ -1,5 +1,5 @@
 ###v1.0.6 - Oct, 2014
-Fix - clear was not deleting lines with spaces, added quotes
+Fix - clear was not deleting lines with spaces, added quotes  
 Changed:  
   \- Quick fix - added quotes around message to grep for in clear, -c
 Upcoming:  
