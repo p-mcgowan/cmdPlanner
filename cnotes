@@ -93,8 +93,8 @@ case "$operation" in
   #+ containing input substring
   #  Requires input file ($course => $file) and substring ($message)
     if [ "$message" != "" ] && [ "$file" != "" ]; then
-      cat $file |grep "$message" >$working_dir/deleted/lastline &&
-      sed -i "/$(grep -m 1 "$message" $file)/d" $file &&
+      cat $file |grep -m 1 "$message" >$working_dir/deleted/lastline &&
+      sed -i /"$(grep -m 1 "$message" $file)"/d $file &&
       echo Deleted \'$(cat $working_dir/deleted/lastline)\'\
       from $file &&
       bash $0 pull $course ||
@@ -110,8 +110,8 @@ case "$operation" in
   #+ string to append ($addargs)"
     if [ "$args" != "" ] && [ "$file" != "" ] && [ "$addargs" != "" ]; then
       if [ "$(grep -m 1 $args $file)" != "" ]; then
-        sed -i "s/$(grep -m 1 $args $file)/$(grep -m 1 $args $file)$addargs/g" $file
-        echo Successfully appended $addargs to\
+        sed -i 's/"$(grep -m 1 $args $file)"/"$(grep -m 1 $args $file)$addargs"/g' $file
+        echo Appended \'"$addargs"\' to\
         $file: $args
         bash $0 pull $course
       else
@@ -199,31 +199,63 @@ case "$operation" in
   # Sort - Prints file lines containing dates ranging from todays date +[0,24] in order
   # Requires (optional) number of days to iterate through and search for ($course)
     week_month="[M,T,W,R,F,S,U][j,f,m,a,my,j,jl,ag,s,o,n,d]"
-    if [ "$course" == "" ] || [ "$course" -gt "24" ] || [ "$course" -lt "0" ]; then
+    if [ "$course" == "-c" ]; then
+      length=24
+      cal >thisMonth
+      if [ $(date +%m) == 12 ]; then
+        cal 1 $(date +%Y) >nextMonth
+      else
+        cal $(( $(date +%m) + 1 )) $(date +%Y) >nextMonth
+      fi
+      if [ "$(( $(date +%d) + 0 ))" -lt "10" ]; then
+        replace="-- "
+      else
+        replace=" -- "
+      fi
+      cat thisMonth |sed s/\ $(( $(date +%d) + 0 ))$/"$replace"/g |sed s/\ $(( $(date +%d) + 0 ))\ /"$replace"/g >thisMonth
+    elif [ "$course" == "" ] || [ "$course" -gt "24" ] || [ "$course" -lt "0" ]; then
       length=7
     else
       length=$course
     fi
     days_this_month=$(cal |egrep -v [a-z] |wc -w)
-    for i in $(find $working_dir -maxdepth 1 -type f |grep -v tmp); do
+    for i in $(find $working_dir -maxdepth 1 -type f |grep -v tmp |grep -v Month); do
       echo "> $(basename $i)" >>tmp
       cat $i >>$working_dir/tmp
     done
-    for (( i=`expr $(date +%d) + 0`; i<=`expr $(date +%d) + 0`+$length; i++ )); do
+    if [ $(($(date +%d) + $length)) -gt $days_this_month ]; then
+      end_day=$(( $(date +%d) + $length - $days_this_month ))
+      end_month=$(( $(date +%m) + 1))
+    else
+      end_day=$(( $(date +%d) + $length ))
+      end_month=$(date +%m)
+    fi
+    echo Showing date range: $(date +%m.%d) - $end_month.$end_day
+    for (( i=(( $(date +%d) + 0 )); i<=(( $(date +%d) + $length )); i++ )); do
       if [ $i -gt $days_this_month ]; then
         day=$(( $i - $days_this_month ))
+        calMonth=nextMonth
       else
         day=$i
+        calMonth=thisMonth
       fi
-      for file in $(find $working_dir -maxdepth 1 -type f |grep -v tmp); do
+      for file in $(find $working_dir -maxdepth 1 -type f |grep -v tmp |grep -v Month); do
         if [ "$(grep $week_month$day$ $file)" != "" ]; then
           echo  "> $(basename $file)"
           grep $week_month$day$ $file |tee del
           while read line; do
-            #echo -$line
             sed -i /"$line"/d $working_dir/tmp
           done <del
           rm del
+          if [ "$course" == "-c" ]; then
+            if [ "$day" -lt "10" ]; then
+              replace="xx "
+            else
+              replace=" xx "
+            fi
+            cat $calMonth |sed s/\ $day$/"$replace"/g |sed s/\ $day\ /"$replace"/g >calTmp
+            mv calTmp $calMonth
+          fi
         fi
       done
     done
@@ -238,18 +270,27 @@ case "$operation" in
     if [ "$(echo $lastline |grep \>)" != "" ]; then
       sed -i "/$lastline/d" tmp 
     fi
-    echo -e "\nUnmatched:"
-    cat tmp
+    echo
+    if [ "$(cat tmp)" != "" ]; then
+      echo Unmatched:
+      cat tmp
+    fi
     rm tmp
+    if [ "$course" == "-c" ]; then
+      cat thisMonth
+      cat nextMonth
+      rm thisMonth nextMonth
+    fi
     ;;
   "help" | "-h")
   # Help - Prints info on operation usage
-    echo "Usage: cnotes [-acDfhopPrRu] [-rl] course args addargs"
+    echo "Usage: cnotes [-acDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs"
     echo "options:"
     echo " -p, push  - append args to course"
     echo " -P, pull  - read from course or print all with no course"
     echo " -l, list  - print all course files"
-    echo " -c, clear - delete first line containing args from course, temporarily storing it in working_dir/deleted/lastline"
+    echo " -c, clear - delete first line containing args from course, temporarily storing"
+    echo "             it in working_dir/deleted/lastline"
     echo " -a, add   - append addargs to first line containing args in course"
     echo " -D, del   - delete course file, temporarily storing it in working_dir/deleted/"    
     echo " -u, undo  - append most recently cleared line to course"
@@ -258,11 +299,12 @@ case "$operation" in
     echo " -r, rep   - replace first line occurence of args with addargs"
     echo " -f, find  - print file lines containing args"
     echo " -o, sort  - print file lines in order containing todays date + args (default 7)"
+    echo "             use -o -c to print calendar"
     echo " -h, help  - show this menu"
     ;;
   * | "")
   # Default - Prints minimal usage information
-    echo "Usage: cnotes [-acDfhpPrRu] [-rl] course args addargs"
+    echo "Usage: cnotes [-acDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs"
     echo "Type cnotes help or cnotes -h for more info"
     ;;
 esac
