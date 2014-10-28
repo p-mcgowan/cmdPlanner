@@ -110,7 +110,7 @@ case "$operation" in
   #+ string to append ($addargs)"
     if [ "$args" != "" ] && [ "$file" != "" ] && [ "$addargs" != "" ]; then
       if [ "$(grep -m 1 $args $file)" != "" ]; then
-        sed -i 's/"$(grep -m 1 $args $file)"/"$(grep -m 1 $args $file)$addargs"/g' $file
+        sed -i s/"$(grep -m 1 $args $file)"/"$(grep -m 1 $args $file)$addargs"/g $file
         echo Appended \'"$addargs"\' to\
         $file: $args
         bash $0 pull $course
