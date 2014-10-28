@@ -1,3 +1,6 @@
+###v1.1.1 - Oct, 2014
+  \- -a, append strong quotations in sed were fixed  
+
 ###v1.1.0 - Oct, 2014
 Calendar sort - sort option prints calendar.  
   \- -o, sort now has additional -c parameter which prints this month and next months calendar with date marking based on formatted sort input.  
