@@ -1,3 +1,6 @@
+###v1.1.2 - Oct, 2014
+  \- minor sort output formatting  
+
 ###v1.1.1 - Oct, 2014
   \- -a, append strong quotations in sed were fixed  
 
