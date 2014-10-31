@@ -274,6 +274,7 @@ case "$operation" in
     if [ "$(cat tmp)" != "" ]; then
       echo Unmatched:
       cat tmp
+      echo
     fi
     rm tmp
     if [ "$course" == "-c" ]; then
