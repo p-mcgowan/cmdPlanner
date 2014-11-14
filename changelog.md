@@ -1,3 +1,7 @@
+###v1.1.3 - Nov, 2014
+  \- Optimizations in sort  
+  \- Formatting changes  
+
 ###v1.1.2 - Oct, 2014
   \- minor sort output formatting  
 
