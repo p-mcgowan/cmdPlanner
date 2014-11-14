@@ -202,17 +202,17 @@ case "$operation" in
     if [ "$course" == "-c" ]; then
       length=24
       cal >thisMonth
-      if [ $(date +%m) == 12 ]; then
+      if [ $(date +%-m) == 12 ]; then
         cal 1 $(date +%Y) >nextMonth
       else
-        cal $(( $(date +%m) + 1 )) $(date +%Y) >nextMonth
+        cal $(( $(date +%-m) + 1 )) $(date +%Y) >nextMonth
       fi
-      if [ "$(( $(date +%d) + 0 ))" -lt "10" ]; then
+      if [ $(date +%-d) -lt 10 ]; then
         replace="-- "
       else
         replace=" -- "
       fi
-      cat thisMonth |sed s/\ $(( $(date +%d) + 0 ))$/"$replace"/g |sed s/\ $(( $(date +%d) + 0 ))\ /"$replace"/g >thisMonth
+      cat thisMonth |sed s/\ $(date +%-d)$/"$replace"/g |sed s/\ $(date +%-d)\ /"$replace"/g >thisMonth
     elif [ "$course" == "" ] || [ "$course" -gt "24" ] || [ "$course" -lt "0" ]; then
       length=7
     else
@@ -223,15 +223,18 @@ case "$operation" in
       echo "> $(basename $i)" >>tmp
       cat $i >>$working_dir/tmp
     done
-    if [ $(($(date +%d) + $length)) -gt $days_this_month ]; then
-      end_day=$(( $(date +%d) + $length - $days_this_month ))
-      end_month=$(( $(date +%m) + 1))
+    if [ $(($(date +%-d) + $length)) -gt $days_this_month ]; then
+      end_day=$(( $(date +%-d) + $length - $days_this_month ))
+      end_month=$(( $(date +%-m) + 1))
     else
-      end_day=$(( $(date +%d) + $length ))
-      end_month=$(date +%m)
+      end_day=$(( $(date +%-d) + $length ))
+      end_month=$(date +%-m)
     fi
-    echo Showing date range: $(date +%m.%d) - $end_month.$end_day
-    for (( i=(( $(date +%d) + 0 )); i<=(( $(date +%d) + $length )); i++ )); do
+    echo Showing date range: $(date +%-m.%-d) - $end_month.$end_day
+    for (( i=$(date +%-d); i<=(( $(date +%-d) + $length )); i++ )); do
+      if [ "$(grep $week_month[0-9]$ tmp)" == "" ] && [ "$(grep $week_month[0-9][0-9]$ tmp)" == "" ]; then
+        break
+      fi
       if [ $i -gt $days_this_month ]; then
         day=$(( $i - $days_this_month ))
         calMonth=nextMonth
