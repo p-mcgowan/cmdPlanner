@@ -1,3 +1,6 @@
+###v1.1.4 - Jan, 2015
+  \- Calendar fix for start of line dates  
+
 ###v1.1.3 - Nov, 2014
   \- Optimizations in sort  
   \- Formatting changes  
