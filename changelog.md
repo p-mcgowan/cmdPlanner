@@ -1,4 +1,4 @@
-#v1.1.5 - Jav, 2015
+#v1.1.5 - Jan, 2015
   \- Added touch to fix empty directory errors  
   \- Reformat changelog.md  
 
