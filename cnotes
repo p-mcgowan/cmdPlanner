@@ -3,6 +3,12 @@
 # Basic scheduling program
 working_dir=~/coursenotes
 mkdir -p $working_dir/deleted
+#mkdir -p $working_dir/config
+#if [ ! -f $working_dir/config/cnotes.conf ]; then
+#
+#fi
+#source $working_dir/config/cnotes.conf
+#---make init or clean options
 cd $working_dir
 # Parameter pulling
 operation="$1"
@@ -192,53 +198,55 @@ case "$operation" in
   "sort" | "-o")
   # Sort - Prints file lines containing dates ranging from todays date +[0,24] in order
   # Requires (optional) number of days to iterate through and search for ($course)
-    week_month="[M,T,W,R,F,S,U][j,f,m,a,my,j,jl,ag,s,o,n,d]"
+    week_days="[M,T,W,R,F,S,U]"
+    d=$(date +%-d)
+    m=$(date +%-m)
+    y=$(date +%Y)
+    nm=$(($m % 12 + 1))
+    ny=$(($y + ($m + 1) / 12))
+    short_m=$(cal |egrep -o [A-Z][a-z]\{2\} |tr [A-Z] [a-z])
+    short_nm=$(cal $nm $ny |egrep -o [A-Z][a-z]\{2\} |tr [A-Z] [a-z])
     if [ "$course" == "-c" ]; then
       length=24
       cal >thisMonth
-      if [ $(date +%-m) == 12 ]; then
-        cal 1 $(date +%Y) >nextMonth
-      else
-        cal $(( $(date +%-m) + 1 )) $(date +%Y) >nextMonth
-      fi
-      if [ $(date +%-d) -lt 10 ]; then
+      cal $nm $ny >nextMonth
+      if [ $d -lt 10 ]; then
         replace="-- "
       else
         replace=" -- "
       fi
-      cat thisMonth |sed s/\ $(date +%-d)$/"$replace"/g |sed s/\ $(date +%-d)\ /"$replace"/g >thisMonth
-			sed -i s/^$(date +%-d)\ /--\ /g thisMonth
+      sed -i s/\ $d$/"$replace"/g thisMonth
+      sed -i s/\ $d\ /"$replace"/g thisMonth
+			sed -i s/^$d\ /--\ /g thisMonth
     elif [ "$course" == "" ] || [ "$course" -gt "24" ] || [ "$course" -lt "0" ]; then
       length=7
     else
       length=$course
     fi
     days_this_month=$(cal |egrep -v [a-z] |wc -w)
-    for i in $(find $working_dir -maxdepth 1 -type f |grep -v tmp |grep -v Month); do
+    for i in $(find $working_dir -maxdepth 1 -type f |egrep -v tmp\|Month); do
       echo "> $(basename $i)" >>tmp
       cat $i >>$working_dir/tmp
     done
-    if [ $(($(date +%-d) + $length)) -gt $days_this_month ]; then
-      end_day=$(( $(date +%-d) + $length - $days_this_month ))
-      end_month=$(( $(date +%-m) + 1))
-    else
-      end_day=$(( $(date +%-d) + $length ))
-      end_month=$(date +%-m)
-    fi
-    echo Showing date range: $(date +%-d.%-m) - $end_day.$end_month
-    for (( i=$(date +%-d); i<=(( $(date +%-d) + $length )); i++ )); do
-      [ "$(grep $week_month[0-9]$ tmp)" != "" ] || [ "$(grep $week_month[0-9][0-9]$ tmp)" != "" ] || break
+    end_day=$(( ($d - 1 + $length) % days_this_month + 1 ))
+    end_month=$nm
+    #echo Showing date range: $d.$m - $end_day.$end_month
+    echo Showing date range: $short_m $d - $short_nm $end_day
+    for (( i=$d; i<=(( $d + $length )); i++ )); do
+      [ "$(egrep $week_days$short_m[0-9]\{1,2\}$\|$week_days$short_nm[0-9]\{1,2\}$ tmp)" != "" ] || break
       if [ $i -gt $days_this_month ]; then
         day=$(( $i - $days_this_month ))
         calMonth=nextMonth
+        currMonth=$short_nm
       else
         day=$i
         calMonth=thisMonth
+        currMonth=$short_m
       fi
-      for file in $(find $working_dir -maxdepth 1 -type f |grep -v tmp |grep -v Month); do
-        if [ "$(grep $week_month$day$ $file)" != "" ]; then
+      for file in $(find $working_dir -maxdepth 1 -type f |egrep -v tmp\|Month); do
+        if [ "$(egrep $week_days$currMonth$day$ $file)" != "" ]; then
           echo  "> $(basename $file)"
-          grep $week_month$day$ $file |tee del
+          egrep $week_days$currMonth$day$ $file |tee del
           while read line; do
             sed -i /"$line"/d $working_dir/tmp
           done <del
@@ -275,7 +283,7 @@ case "$operation" in
     fi
     rm tmp
     if [ "$course" == "-c" ]; then
-      cat thisMonth
+      cat thisMonth |sed '$ d'
       cat nextMonth
       rm thisMonth nextMonth
     fi
