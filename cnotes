@@ -21,6 +21,7 @@ shift
 addargs="$*"
 file=
 # Course selection for in/output file
+touch CPSC320 EECE269 CPSC304 CPSC261 OTHER
 case "$course" in
   "320")
     file=CPSC320
