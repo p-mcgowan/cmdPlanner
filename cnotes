@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.spartacusrex.spartacuside/files/system/bin/bash
 
 # Basic scheduling program
 working_dir=~/coursenotes
