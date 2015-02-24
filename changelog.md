@@ -1,3 +1,8 @@
+###v1.2.0 - Feb, 2015
+  \- Sort and calendar functionality changed  
+    \- Date format for searching now uses 3 char format (eg mar for March) to fix dates being sorted improperly  
+  \- Slight optimizations and cleanup  
+
 ###v1.1.4 - Jan, 2015
   \- Calendar fix for start of line dates  
 
