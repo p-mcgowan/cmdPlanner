@@ -1,3 +1,6 @@
+#v1.3.0 - Feb, 2015
+  \- Added config file and config loading options for easily modifiable courses and files  
+
 #v1.2.0 - Feb, 2015
   \- Sort and calendar functionality changed  
     \- Date format for searching now uses 3 char format (eg mar for March) to fix dates being sorted improperly  
