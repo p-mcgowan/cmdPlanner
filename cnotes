@@ -2,13 +2,15 @@
 
 # Basic scheduling program
 working_dir=~/coursenotes
+mkdir -p $working_dir/config
+config_file="$working_dir/config/cnotes.conf"
+if [ ! -f $config_file ]; then
+  echo Error: Could not find cnotes.conf in $working_dir/config/
+  exit 2
+fi
+source $working_dir/config/cnotes.conf
 mkdir -p $working_dir/deleted
-#mkdir -p $working_dir/config
-#if [ ! -f $working_dir/config/cnotes.conf ]; then
-#
-#fi
-#source $working_dir/config/cnotes.conf
-#---make init or clean options
+#---make clean option - delete and re-init
 cd $working_dir
 # Parameter pulling
 operation="$1"
@@ -19,29 +21,19 @@ shift
 message="$*"
 shift
 addargs="$*"
-file=
+
 # Course selection for in/output file
-touch CPSC320 EECE269 CPSC304 CPSC261 OTHER
-case "$course" in
-  "320")
-    file=CPSC320
-    ;;
-  "269")
-    file=EECE269
-    ;;
-  "304")
-    file=CPSC304
-    ;;
-  "261")
-    file=CPSC261
-    ;;
-  "other" | "misc")
-    file=OTHER
-    ;;
-  *)
-    file=
-    ;;
-esac
+touch $files
+conf_courses=" $courses "
+conf_search="[ |]$course[ |]"
+
+if [ "${conf_courses/$conf_search/}" == "$courses" ]; then
+  file=
+else
+  pos=$(($(echo $conf_courses |sed "s/[^ ]*$course.*//g" |wc -w) + 1))
+  file=$(echo $files |cut -d' ' -f$pos)
+fi
+
 # Operation selection
 case "$operation" in
   "push" | "-p")
@@ -316,3 +308,4 @@ case "$operation" in
     echo "Type cnotes help or cnotes -h for more info"
     ;;
 esac
+
