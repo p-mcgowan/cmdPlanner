@@ -12,6 +12,7 @@ source $working_dir/config/cnotes.conf
 mkdir -p $working_dir/deleted
 #---make clean option - delete and re-init
 cd $working_dir
+
 # Parameter pulling
 operation="$1"
 course="$2"
@@ -27,7 +28,7 @@ touch $files
 conf_courses=" $courses "
 conf_search="[ |]$course[ |]"
 
-if [ "${conf_courses/$conf_search/}" == "$courses" ]; then
+if [ "$course" == "" ] || [ "${conf_courses/$conf_search/}" == "$courses" ]; then
   file=
 else
   pos=$(($(echo $conf_courses |sed "s/[^ ]*$course.*//g" |wc -w) + 1))
@@ -159,13 +160,13 @@ case "$operation" in
   #  Requires input file ($course => $file), substring to replace ($args),
   #+ replacement string ($addargs)
     if [ "$args" != "" ] && [ "$file" != "" ] && [ "$addargs" != "" ]; then
-      if [ "$(grep -m 1 $args $file)" != "" ]; then
-        matched_str=$(grep -m 1 $args $file)
+      if $(grep -qm 1 "$args" $file); then
+        matched_str=$(grep -m 1 "$args" $file)
         echo $matched_str > $working_dir/deleted/lastline
         if [ "$operation" == "rep" ] || [ "$operation" == "-r" ]; then
-          replacement=${matched_str/$args/$addargs}
+          replacement=${matched_str/"$args"/"$addargs"}
         else
-          replacement=$addargs
+          replacement="$addargs"
         fi
         sed -i s/"$matched_str"/"$replacement"/g $file
         echo Changed $file: \'$matched_str\' \
@@ -182,7 +183,7 @@ case "$operation" in
   # Find - Seaches files for matching string
   # Requires string to search for ($course)
     if [ "$course" != "" ]; then
-      find $working_dir -maxdepth 1 -type f \( -exec grep -q $course {} \; -exec echo -n "> " \; -exec basename {} \; -exec grep $course {} \; \)
+      find $working_dir -maxdepth 1 -type f \( -exec grep -q "$course" {} \; -exec echo -n "> " \; -exec basename {} \; -exec grep "$course" {} \; \)
     else
       echo Missing argument\(s\)
       bash $0
@@ -302,7 +303,7 @@ case "$operation" in
 	echo "             (default 7). Use -o -c to print calendar"
     echo " -h, help  - show this menu"
     ;;
-  * | "")
+  *)
   # Default - Prints minimal usage information
     echo "Usage: cnotes [-acDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs"
     echo "Type cnotes help or cnotes -h for more info"
