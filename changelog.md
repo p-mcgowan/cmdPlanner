@@ -1,3 +1,6 @@
+#v1.3.2 - Mar, 2015  
+  \- Fix and clean config loading  
+
 #v1.3.1 - Feb, 2015  
   \- String replace hotfix, now works for quoted input (eg cnotes -r course "param param param" "replacement param")  
 
