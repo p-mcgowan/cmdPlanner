@@ -1,5 +1,5 @@
 #v1.3.3 - Mar, 2015
-  \- config loader re-fixed  
+  \- Fixed error in calculating target file with multiple calling conventions  
 
 #v1.3.2 - Mar, 2015  
   \- Fix and clean config loading  
