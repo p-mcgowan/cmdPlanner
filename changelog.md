@@ -1,5 +1,5 @@
 #v1.3.5 - Mar, 2015  
-  \- Small formatting changes  
+  \- Multiple refactoring and format changes 
 
 #v1.3.4 - Mar, 2015  
   \- Added -C, --conf to print config settings  
