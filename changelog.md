@@ -1,4 +1,4 @@
-#v1.3.3 - Mar, 2015  
+#v1.3.4 - Mar, 2015  
   \- Added -C, --conf to print config settings  
   \- Large formatting restructure, long options now prepended with -- to comply with standards  
 
