@@ -1,4 +1,4 @@
-#!/data/data/com.spartacusrex.spartacuside/files/system/bin/bash
+#!/bin/bash
 
 # Basic scheduling program
 working_dir=~/coursenotes
@@ -67,7 +67,6 @@ Usage: cnotes [-acCDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs
   -u, --undo
       append most recently cleared line to course
 "
-echo $operation
 # Operation selection
 case "$operation" in
   "--push" | "-p")
