@@ -31,13 +31,46 @@ conf_search="[ |]$course[ |]"
 if [ "$course" == "" ] || [ "${conf_courses/$conf_search*/}" == "$conf_courses" ]; then
   file=
 else
-  pos=$(echo ${conf_courses/$conf_search*/} |wc -w)
+  pos=$(($(echo $conf_courses |sed "s/[^ ]*$course.*//g" |wc -w) + 1))
   file=$(echo $files |cut -d' ' -f$pos)
 fi
 
+usage="\
+Usage: cnotes [-acCDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs
+  -a, --add
+      append addargs to first line containing args in course
+  -c, --clear
+      delete first line containing args from course, temporarily
+      storing it in working_dir/deleted/lastline
+  -D, --del
+      delete course file, temporarily storing it in
+	    working_dir/deleted/        
+  -f, --find
+      print file lines containing args
+  -h, --help
+      show this menu
+  -l, --list
+      print all course files
+  -p, --push
+      append args to course
+  -P, --pull
+      read from course or print all with no course
+  -r, --rep
+  -R, --rest
+      swap deleted course file with one in working_dir/deleted
+      replace first line occurence of args with addargs
+  -rl, --repl
+      replace first line containing args with addargs
+  -o, --sort
+      print file lines in order containing todays date + args
+	    (default 7). Use -o -c to print calendar
+  -u, --undo
+      append most recently cleared line to course
+"
+
 # Operation selection
 case "$operation" in
-  "push" | "-p")
+  "--push" | "-p")
   #  Push - Sends input to text file
   #  Requires input ($message), file ($course => $file) 
     if [ "$file" != "" ] && [ "$message" != "" ] && [ "$course" != "" ]; then
@@ -49,7 +82,7 @@ case "$operation" in
       bash $0
     fi
     ;;
-  "pull" | "-P")
+  "--pull" | "-P")
   #  Pull - Prints contents of a file or of all files (with no params)
   #  Requires (optional) file to read from ($course => $file)
     if [ "$file" == "" ]; then
@@ -63,7 +96,7 @@ case "$operation" in
       fi
     fi
     ;;
-  "-D" | "del")
+  "-D" | "--del")
   #  Delete - Removes entire contents of input file and replaces with empty one.
   #+ Stores file in deleted/ until next deletion operation.
   #  Requires input file ($course => $file)
@@ -82,7 +115,7 @@ case "$operation" in
       bash $0
     fi
     ;;
-  "clear" | "-c")
+  "--clear" | "-c")
   #  Clear - Removes a single line from file, determined by the first string
   #+ containing input substring
   #  Requires input file ($course => $file) and substring ($message)
@@ -98,7 +131,7 @@ case "$operation" in
       bash $0
     fi
     ;;
-  "add" | "-a")
+  "--add" | "-a")
   #  Append - Appends a string onto existing line in text file
   #  Requires input file ($course => $file), substring to search for ($args),
   #+ string to append ($addargs)"
@@ -116,11 +149,11 @@ case "$operation" in
       bash $0
     fi
     ;;
-  "list" | "-l")
+  "--list" | "-l")
   # List - Prints contents of text files in working directory
     find . -maxdepth 1 -type f -exec echo -n "> " \; -exec basename {} \; -exec cat {} \;
     ;;
-  "undo" | "-u")
+  "--undo" | "-u")
   #  Undo - restores last deleted line to a file
   #  Requires input file ($course ==> $file) 
     if [ "$file" != "" ]; then
@@ -136,7 +169,7 @@ case "$operation" in
       bash $0
     fi
     ;;
-  "rest" | "-R")
+  "--rest" | "-R")
   # Restore - Replaces text file in deleted/, swapping it with existing one in working directory
   # Requires input file ($course => $file)
     if [ "$file" != "" ]; then
@@ -155,7 +188,7 @@ case "$operation" in
       bash $0
     fi
     ;;
-  "rep" | "-r" | "-rl" | "repl")
+  "--rep" | "-r" | "-rl" | "--repl")
   #  Replace - Replaces a single word or line in input file with another one
   #  Requires input file ($course => $file), substring to replace ($args),
   #+ replacement string ($addargs)
@@ -179,7 +212,7 @@ case "$operation" in
       bash $0
     fi
     ;;
-  "find" | "-f")
+  "--find" | "-f")
   # Find - Seaches files for matching string
   # Requires string to search for ($course)
     if [ "$course" != "" ]; then
@@ -189,7 +222,7 @@ case "$operation" in
       bash $0
     fi
     ;;
-  "sort" | "-o")
+  "--sort" | "-o")
   # Sort - Prints file lines containing dates ranging from todays date +[0,24] in order
   # Requires (optional) number of days to iterate through and search for ($course)
     week_days="[M,T,W,R,F,S,U]"
@@ -282,31 +315,27 @@ case "$operation" in
       rm thisMonth nextMonth
     fi
     ;;
-  "help" | "-h")
+  "--conf" | "-C")
+  # Conf - Prints config settings
+    i=1
+    j=$(echo $files |wc -w)
+    while [ $i -le $j ]; do
+      [ $i == 1 ] || echo -ne ", "
+      cf=$(echo $files |cut -d' ' -f$i)
+      cc=$(echo $courses |cut -d' ' -f$i)
+      echo -ne "$cc->$cf"
+
+      (( i++ ))
+    done
+  ;;
+  "--help" | "-h")
   # Help - Prints info on operation usage
-    echo "Usage: cnotes [-acDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs"
-    echo "options:"
-    echo " -p, push  - append args to course"
-    echo " -P, pull  - read from course or print all with no course"
-    echo " -l, list  - print all course files"
-    echo " -c, clear - delete first line containing args from course, temporarily"
-    echo "             storing it in working_dir/deleted/lastline"
-    echo " -a, add   - append addargs to first line containing args in course"
-    echo " -D, del   - delete course file, temporarily storing it in"
-	echo "             working_dir/deleted/"    
-    echo " -u, undo  - append most recently cleared line to course"
-    echo " -R, rest  - swap deleted course file with one in working_dir/deleted"
-    echo " -rl, repl - replace first line containing args with addargs"
-    echo " -r, rep   - replace first line occurence of args with addargs"
-    echo " -f, find  - print file lines containing args"
-    echo " -o, sort  - print file lines in order containing todays date + args"
-	echo "             (default 7). Use -o -c to print calendar"
-    echo " -h, help  - show this menu"
-    ;;
-  *)
+    echo "$usage"
+  ;;
   # Default - Prints minimal usage information
-    echo "Usage: cnotes [-acDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs"
-    echo "Type cnotes help or cnotes -h for more info"
+  *)
+    echo "Usage: cnotes [-acCDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs"
+    echo "Type cnotes -h or cnotes --help for more info"
     ;;
 esac
 
