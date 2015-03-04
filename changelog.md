@@ -1,3 +1,6 @@
+#v1.3.6 - Mar, 2015  
+  \- Added config making option if config file not found  
+
 #v1.3.5 - Mar, 2015  
   \- Multiple refactoring and format changes 
 
