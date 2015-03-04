@@ -1,3 +1,6 @@
+#v1.3.3 - Mar, 2015
+  \- config loader re-fixed  
+
 #v1.3.2 - Mar, 2015  
   \- Fix and clean config loading  
 
