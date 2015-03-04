@@ -5,8 +5,30 @@ working_dir=~/coursenotes
 mkdir -p $working_dir/config
 config_file="$working_dir/config/cnotes.conf"
 if [ ! -f $config_file ]; then
-  echo Error: Could not find cnotes.conf in $working_dir/config/
-  exit 2
+  echo Error: Could not initialize: $working_dir/config/cnotes.conf not found.
+  # new config
+  echo -ne "Create one now (y/n)? "
+  read input
+  cc=
+  cf=
+  while [ "$input" == "y" ] || [ "$input" == "Y" ]; do
+    echo -ne "Enter course(s) (eg course1|course)\n> "
+    read input
+    cc=$cc" $input"
+    echo -ne "Enter filenames (eg courseFile1)\n> "
+    read input
+    cf=$cf" $input"
+    echo -ne "Add another course (y/n)?\n> "
+    read input
+  done
+  if [ "$cc" == "" ] && [ "$cf" == "" ]; then
+    exit 2
+  else
+    echo "courses=\"${cc/ /}\"" >$working_dir/config/cnotes.conf
+    echo "files=\"${cf/ /}\"" >>$working_dir/config/cnotes.conf
+    echo -ne "Done.\n$(cat $working_dir/config/cnotes.conf)\n"
+    exit 1
+  fi
 fi
 source $working_dir/config/cnotes.conf
 mkdir -p $working_dir/deleted
@@ -135,7 +157,7 @@ case "$operation" in
   #  Requires input file ($course => $file), substring to search for ($args),
   #+ string to append ($addargs)"
     if [ "$args" != "" ] && [ "$file" != "" ] && [ "$addargs" != "" ]; then
-      if [ "$(grep -m 1 $args $file)" != "" ]; then
+      if $(grep -qm 1 $args $file); then
         sed -i s/"$(grep -m 1 $args $file)"/"$(grep -m 1 $args $file)$addargs"/g $file
         echo Appended \'"$addargs"\' to\
         $file: $args
@@ -156,7 +178,7 @@ case "$operation" in
   #  Undo - restores last deleted line to a file
   #  Requires input file ($course ==> $file) 
     if [ "$file" != "" ]; then
-      if [ "$(cat $working_dir/deleted/lastline 2>/dev/null)" != "" ]; then
+      if $(grep -q . $working_dir/deleted/lastline); then
         cat $working_dir/deleted/lastline >> $file
         echo Appended \'$(cat $working_dir/deleted/lastline)\'\
         to $file
@@ -250,16 +272,15 @@ case "$operation" in
       length=$course
     fi
     days_this_month=$(cal |egrep -v [a-z] |wc -w)
-    for i in $(find $working_dir -maxdepth 1 -type f |egrep -v tmp\|Month); do
+    for i in $files; do
       echo "> $(basename $i)" >>tmp
       cat $i >>$working_dir/tmp
     done
     end_day=$(( ($d - 1 + $length) % days_this_month + 1 ))
     end_month=$nm
-    #echo Showing date range: $d.$m - $end_day.$end_month
     echo Showing date range: $short_m $d - $short_nm $end_day
     for (( i=$d; i<=(( $d + $length )); i++ )); do
-      [ "$(egrep $week_days$short_m[0-9]\{1,2\}$\|$week_days$short_nm[0-9]\{1,2\}$ tmp)" != "" ] || break
+      $(egrep -q $week_days$short_m[0-9]\{1,2\}$\|$week_days$short_nm[0-9]\{1,2\}$ tmp) || break
       if [ $i -gt $days_this_month ]; then
         day=$(( $i - $days_this_month ))
         calMonth=nextMonth
@@ -269,8 +290,8 @@ case "$operation" in
         calMonth=thisMonth
         currMonth=$short_m
       fi
-      for file in $(find $working_dir -maxdepth 1 -type f |egrep -v tmp\|Month); do
-        if [ "$(egrep $week_days$currMonth$day$ $file)" != "" ]; then
+      for file in $files; do
+        if $(egrep -q $week_days$currMonth$day$ $file); then
           echo  "> $(basename $file)"
           egrep $week_days$currMonth$day$ $file |tee del
           while read line; do
@@ -293,16 +314,16 @@ case "$operation" in
     lastline=
     while read line
     do
-      if [ "$(echo $line |grep \>)" != "" ] && [ "$(echo $lastline |grep \>)" != "" ]; then
+      if $(echo $line |grep -q \>) && $(echo $lastline |grep -q \>); then
         sed -i "/$lastline/d" tmp 
       fi
       ilastline=$line
     done < tmp 
-    if [ "$(echo $lastline |grep \>)" != "" ]; then
+    if $(echo $lastline |grep -q \>); then
       sed -i "/$lastline/d" tmp 
     fi
     echo
-    if [ "$(cat tmp)" != "" ]; then
+    if $(grep -q . tmp); then
       echo Unmatched:
       cat tmp
       echo
@@ -326,6 +347,7 @@ case "$operation" in
 
       (( i++ ))
     done
+    echo
   ;;
   "--help" | "-h")
   # Help - Prints info on operation usage
