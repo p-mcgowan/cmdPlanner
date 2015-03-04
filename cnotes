@@ -58,7 +58,7 @@ else
 fi
 
 usage="\
-Usage: $(basename $0) -acCDfhpPrZRu [-o [-c/N]] [COURSE] [ARGS] [ADDARGS]
+Usage: $(basename $0) -acCDfhpPrzRu [-o [-c/N]] [COURSE] [ARGS] [ADDARGS]
  -a, --add COURSE ARGS
       append ADDARGS to first line containing ARGS in COURSE
  -c, --clear COURSE ARGS
@@ -355,7 +355,7 @@ case "$operation" in
   ;;
   # Default - Prints minimal usage information
   *)
-    echo "Usage: $(basename $0) -acCDfhpPrRu [-o [-c/N]] [-z] [course] [args] [addargs]"
+    echo "Usage: $(basename $0) -acCDfhpPrzRu [-o [-c/N]] [COURSE] [ARGS] [ADDARGS]"
     echo "Type cnotes -h or cnotes --help for more info"
   ;;
 esac
