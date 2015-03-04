@@ -1,3 +1,7 @@
+#v1.3.3 - Mar, 2015  
+  \- Added -C, --conf to print config settings  
+  \- Large formatting restructure, long options now prepended with -- to comply with standards  
+
 #v1.3.3 - Mar, 2015
   \- Fixed error in calculating target file with multiple calling conventions  
 
