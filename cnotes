@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.spartacusrex.spartacuside/files/system/bin/bash
 
 # Basic scheduling program
 working_dir=~/coursenotes
@@ -58,37 +58,37 @@ else
 fi
 
 usage="\
-Usage: cnotes OPTIONS [-o [date_range/-c]] [-rl] [course] [args] [addargs]
- -a,  --add
-      append addargs to first line containing args in course
- -c,  --clear
-      delete first line containing args from course, temporarily
+Usage: $(basename $0) -acCDfhpPrZRu [-o [-c/N]] [COURSE] [ARGS] [ADDARGS]
+ -a, --add COURSE ARGS
+      append ADDARGS to first line containing ARGS in COURSE
+ -c, --clear COURSE ARGS
+      delete first line containing ARGS from COURSE, temporarily
       storing it in working_dir/deleted/lastline
- -D,  --del
-      delete course file, temporarily storing it in
-	    working_dir/deleted/        
- -f,  --find
-      print file lines containing args
- -h,  --help
+ -D, --del COURSE
+      delete COURSE file, temporarily storing it in working_dir/deleted/
+ -f, --find ARGS
+      print file lines containing ARGS
+ -h, --help
       show this menu
- -l,  --list
-      print all course files
- -p,  --push
-      append args to course
- -P,  --pull
-      read from course or print all with no course
- -r,  --rep
- -R,  --rest
-      swap deleted course file with one in working_dir/deleted
-      replace first line occurence of args with addargs
- -rl, --repl
-      replace first line containing args with addargs
- -o,  --sort
-      print file lines in order containing todays date + args
-	    (default 7). Use -o -c to print calendar
- -u,  --undo
-      append most recently cleared line to course
+ -l, --list
+      print all files
+ -p, --push COURSE ARGS
+      append ARGS to COURSE
+ -P, --pull COURSE
+      read from COURSE or print all with no COURSE
+ -r, --rep COURSE ARGS ADDARGS
+      replace first occurence of ARGS with ADDARGS
+ -z, --repl COURSE ARGS ADDARGS
+      same as -r, but relplaces the whole line
+ -R, --rest COURSE 
+      swap deleted COURSE file with one in working_dir/deleted
+ -o, --sort [N] [-c]
+      print file lines in order containing todays date + N days
+      (default 7). Use -o -c to print calendar
+ -u, --undo COURSE
+      append most recently cleared line to COURSE
 "
+
 # Operation selection
 case "$operation" in
   "--push" | "-p")
@@ -209,7 +209,7 @@ case "$operation" in
       bash $0
     fi
     ;;
-  "--rep" | "-r" | "-rl" | "--repl")
+  "--rep" | "-r" | "-z" | "--repl")
   #  Replace - Replaces a single word or line in input file with another one
   #  Requires input file ($course => $file), substring to replace ($args),
   #+ replacement string ($addargs)
@@ -355,7 +355,7 @@ case "$operation" in
   ;;
   # Default - Prints minimal usage information
   *)
-    echo "Usage: cnotes [-acCDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs"
+    echo "Usage: $(basename $0) -acCDfhpPrRu [-o [-c/N]] [-z] [course] [args] [addargs]"
     echo "Type cnotes -h or cnotes --help for more info"
   ;;
 esac
