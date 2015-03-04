@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.spartacusrex.spartacuside/files/system/bin/bash
 
 # Basic scheduling program
 working_dir=~/coursenotes
@@ -67,7 +67,7 @@ Usage: cnotes [-acCDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs
   -u, --undo
       append most recently cleared line to course
 "
-
+echo $operation
 # Operation selection
 case "$operation" in
   "--push" | "-p")
@@ -76,7 +76,7 @@ case "$operation" in
     if [ "$file" != "" ] && [ "$message" != "" ] && [ "$course" != "" ]; then
       echo "$message" >> $file
       echo Added \'$message\' to $file
-      bash $0 pull $course
+      bash $0 --pull $course
     else
       echo Invalid format
       bash $0
@@ -124,7 +124,7 @@ case "$operation" in
       sed -i /"$(grep -m 1 "$message" $file)"/d $file &&
       echo Deleted \'$(cat $working_dir/deleted/lastline)\'\
       from $file &&
-      bash $0 pull $course ||
+      bash $0 --pull $course ||
       echo String \'$message\' not found
     else
       echo Invalid format
@@ -140,7 +140,7 @@ case "$operation" in
         sed -i s/"$(grep -m 1 $args $file)"/"$(grep -m 1 $args $file)$addargs"/g $file
         echo Appended \'"$addargs"\' to\
         $file: $args
-        bash $0 pull $course
+        bash $0 --pull $course
       else
         echo Could not find \'$args\'
       fi
@@ -161,7 +161,7 @@ case "$operation" in
         cat $working_dir/deleted/lastline >> $file
         echo Appended \'$(cat $working_dir/deleted/lastline)\'\
         to $file
-        bash $0 pull $course
+        bash $0 --pull $course
       else
         echo Last line does not exist
       fi
@@ -180,7 +180,7 @@ case "$operation" in
         fi
         mv $working_dir/tmp $working_dir/$file
         echo Restored $file
-        bash $0 pull $course
+        bash $0 --pull $course
       else
         echo Could not restore $file: does not exist
       fi
@@ -204,7 +204,7 @@ case "$operation" in
         sed -i s/"$matched_str"/"$replacement"/g $file
         echo Changed $file: \'$matched_str\' \
         to \'$replacement\'
-        bash $0 pull $course
+        bash $0 --pull $course
       else
         echo Unable to locate \'$args\'
       fi
@@ -297,7 +297,7 @@ case "$operation" in
       if [ "$(echo $line |grep \>)" != "" ] && [ "$(echo $lastline |grep \>)" != "" ]; then
         sed -i "/$lastline/d" tmp 
       fi
-      lastline=$line
+      ilastline=$line
     done < tmp 
     if [ "$(echo $lastline |grep \>)" != "" ]; then
       sed -i "/$lastline/d" tmp 
@@ -336,6 +336,6 @@ case "$operation" in
   *)
     echo "Usage: cnotes [-acCDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs"
     echo "Type cnotes -h or cnotes --help for more info"
-    ;;
+  ;;
 esac
 
