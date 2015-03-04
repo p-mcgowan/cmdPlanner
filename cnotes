@@ -36,35 +36,35 @@ else
 fi
 
 usage="\
-Usage: cnotes [-acCDfhpPrRu] [-o [date_range/-c]] [-rl] course args addargs
-  -a, --add
+Usage: cnotes OPTIONS [-o [date_range/-c]] [-rl] [course] [args] [addargs]
+ -a,  --add
       append addargs to first line containing args in course
-  -c, --clear
+ -c,  --clear
       delete first line containing args from course, temporarily
       storing it in working_dir/deleted/lastline
-  -D, --del
+ -D,  --del
       delete course file, temporarily storing it in
 	    working_dir/deleted/        
-  -f, --find
+ -f,  --find
       print file lines containing args
-  -h, --help
+ -h,  --help
       show this menu
-  -l, --list
+ -l,  --list
       print all course files
-  -p, --push
+ -p,  --push
       append args to course
-  -P, --pull
+ -P,  --pull
       read from course or print all with no course
-  -r, --rep
-  -R, --rest
+ -r,  --rep
+ -R,  --rest
       swap deleted course file with one in working_dir/deleted
       replace first line occurence of args with addargs
-  -rl, --repl
+ -rl, --repl
       replace first line containing args with addargs
-  -o, --sort
+ -o,  --sort
       print file lines in order containing todays date + args
 	    (default 7). Use -o -c to print calendar
-  -u, --undo
+ -u,  --undo
       append most recently cleared line to course
 "
 # Operation selection
