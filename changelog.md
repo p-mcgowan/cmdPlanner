@@ -1,5 +1,5 @@
 #v1.3.6 - Mar, 2015  
-  \- Added config making option if config file not found 
+  \- Added config making option if config file not found  
   \- Changed -rl to -z  
 
 #v1.3.5 - Mar, 2015  
