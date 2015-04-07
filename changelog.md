@@ -1,3 +1,6 @@
+#v1.3.7 - Apr, 2015  
+  \- Formatting and typo bug fix  
+
 #v1.3.6 - Mar, 2015  
   \- Added config making option if config file not found 
   \- Changed -rl to -z  
