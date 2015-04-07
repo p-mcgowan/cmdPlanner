@@ -279,7 +279,7 @@ case "$operation" in
     end_day=$(( ($d - 1 + $length) % days_this_month + 1 ))
     end_month=$nm
     echo Showing date range: $short_m $d - $short_nm $end_day
-    for (( i=$d; i<=(( $d + $length )); i++ )); do
+    for ((i = $d; i <= (( $d + $length )); i++)); do
       $(egrep -q $week_days$short_m[0-9]\{1,2\}$\|$week_days$short_nm[0-9]\{1,2\}$ tmp) || break
       if [ $i -gt $days_this_month ]; then
         day=$(( $i - $days_this_month ))
@@ -312,13 +312,12 @@ case "$operation" in
       done
     done
     lastline=
-    while read line
-    do
+    while read line; do
       if $(echo $line |grep -q \>) && $(echo $lastline |grep -q \>); then
         sed -i "/$lastline/d" tmp 
       fi
-      ilastline=$line
-    done < tmp 
+      lastline=$line
+    done <tmp 
     if $(echo $lastline |grep -q \>); then
       sed -i "/$lastline/d" tmp 
     fi
