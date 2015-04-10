@@ -1,3 +1,6 @@
+#v1.3.9 - Apr, 2015  
+  \- Config parser hotfix, mathches all allowable formats  
+
 #v1.3.8 - Apr, 2015
   \- Added -C, --conf to help  
 
