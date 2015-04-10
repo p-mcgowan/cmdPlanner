@@ -87,6 +87,8 @@ Usage: $(basename $0) -acCDfhpPrzRu [-o [-c/N]] [COURSE] [ARGS] [ADDARGS]
       (default 7). Use -o -c to print calendar
  -u, --undo COURSE
       append most recently cleared line to COURSE
+ -C, --conf
+      print config settings
 "
 
 # Operation selection
