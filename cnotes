@@ -48,12 +48,12 @@ addargs="$*"
 # Course selection for in/output file
 touch $files
 conf_courses=" $courses "
-conf_search="[ |]$course[ |]"
+conf_search="\<$course\>"
 
-if [ "$course" == "" ] || [ "${conf_courses/$conf_search*/}" == "$conf_courses" ]; then
+if [ "$course" == "" ]; then
   file=
 else
-  pos=$(($(echo $conf_courses |sed "s/[^ ]*$course.*//g" |wc -w) + 1))
+  pos=$(($(echo $conf_courses |sed "s/[^ ]*$conf_search.*//g" |wc -w) + 1))
   file=$(echo $files |cut -d' ' -f$pos)
 fi
 
@@ -341,10 +341,10 @@ case "$operation" in
     i=1
     j=$(echo $files |wc -w)
     while [ $i -le $j ]; do
-      [ $i == 1 ] || echo -ne ", "
+      [ $i == 1 ] || echo
       cf=$(echo $files |cut -d' ' -f$i)
       cc=$(echo $courses |cut -d' ' -f$i)
-      echo -ne "$cc->$cf"
+      echo -ne "$cc -> $cf"
 
       (( i++ ))
     done
