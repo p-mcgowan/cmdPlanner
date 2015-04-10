@@ -1,3 +1,6 @@
+#v1.3.8 - Apr, 2015
+  \- Added -C, --conf to help  
+
 #v1.3.7 - Apr, 2015  
   \- Formatting and typo bug fix  
 
