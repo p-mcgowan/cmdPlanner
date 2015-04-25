@@ -143,7 +143,8 @@ case "$operation" in
   #+ containing input substring
   #  Requires input file ($course => $file) and substring ($message)
     if [ "$message" != "" ] && [ "$file" != "" ]; then
-      cat $file |grep -m 1 "$message" >$working_dir/deleted/lastline &&
+      grep -qm 1 "$message" $file &&
+      grep -m 1 "$message" $file >$working_dir/deleted/lastline &&
       sed -i /"$(grep -m 1 "$message" $file)"/d $file &&
       echo Deleted \'$(cat $working_dir/deleted/lastline)\'\
       from $file &&
