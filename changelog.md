@@ -1,3 +1,6 @@
+#v1.3.10 - Apr, 2015
+  \- Fixed non-match query/deletion erasing lastline  
+
 #v1.3.9 - Apr, 2015  
   \- Config parser hotfix, mathches all allowable formats  
 
