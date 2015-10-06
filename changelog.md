@@ -1,3 +1,8 @@
+#v1.4.0 - Oct, 2015  
+  \- Various small optimizations in mutilple calls to external programs  
+  \- Rewrote -o, --sort to cut runtime down bto a quarter of the time  
+  \- Added highlighting on calendar instead of ascii markers
+
 #v1.3.10 - Apr, 2015
   \- Fixed non-match query/deletion erasing lastline  
 
