@@ -12,7 +12,8 @@ if [ ! -f $config_file ]; then
   cc=
   cf=
   while [ "$input" == "y" ] || [ "$input" == "Y" ]; do
-    echo -ne "Enter course(s) (eg course1|course)\n> "
+    echo -ne "Enter course(s), separating multiple aliases with pipes"\
+    " (eg course1|courseOne)\n> "
     read input
     cc=$cc" $input"
     echo -ne "Enter filename (eg courseFile1)\n> "
@@ -21,7 +22,8 @@ if [ ! -f $config_file ]; then
     echo -ne "Add another course (y/n)?\n> "
     read input
   done
-  if [ "$cc" == "" ] && [ "$cf" == "" ]; then
+  if [ "$cc" == "" ] || [ "$cf" == "" ]; then
+    echo "Could not initialize config"
     exit 2
   else
     echo "courses=\"${cc/ /}\"" >$working_dir/config/cnotes.conf
@@ -32,7 +34,6 @@ if [ ! -f $config_file ]; then
 fi
 source $working_dir/config/cnotes.conf
 mkdir -p $working_dir/deleted
-#---make clean option - delete and re-init
 cd $working_dir
 
 # Parameter pulling
@@ -82,9 +83,10 @@ Usage: $(basename $0) -acCDfhpPrzRu [-o [-c/N]] [COURSE] [ARGS] [ADDARGS]
       same as -r, but relplaces the whole line
  -R, --rest COURSE 
       swap deleted COURSE file with one in working_dir/deleted
- -o, --sort [N] [-c]
-      print file lines in order containing todays date + N days
-      (default 7). Use -o -c to print calendar
+ -o, --sort [-c]
+      print tasks in chronological order if the have monthDay appended to
+      them (eg nov15 or sep17). With -c supllied, prints this and next month
+      calendars, highlighting tasks
  -u, --undo COURSE
       append most recently cleared line to COURSE
  -C, --conf
@@ -105,6 +107,7 @@ case "$operation" in
       bash $0
     fi
     ;;
+
   "--pull" | "-P")
   #  Pull - Prints contents of a file or of all files (with no params)
   #  Requires (optional) file to read from ($course => $file)
@@ -119,6 +122,7 @@ case "$operation" in
       fi
     fi
     ;;
+
   "-D" | "--del")
   #  Delete - Removes entire contents of input file and replaces with empty one.
   #+ Stores file in deleted/ until next deletion operation.
@@ -131,23 +135,23 @@ case "$operation" in
         touch $file
         echo Sent $file\
         to $working_dir/deleted/$file
-        bash $0 list
+        bash $0 --list
       fi
     else
       echo Invalid format
       bash $0
     fi
     ;;
+
   "--clear" | "-c")
   #  Clear - Removes a single line from file, determined by the first string
   #+ containing input substring
   #  Requires input file ($course => $file) and substring ($message)
     if [ "$message" != "" ] && [ "$file" != "" ]; then
-      grep -qm 1 "$message" $file &&
-      grep -m 1 "$message" $file >$working_dir/deleted/lastline &&
-      sed -i /"$(grep -m 1 "$message" $file)"/d $file &&
-      echo Deleted \'$(cat $working_dir/deleted/lastline)\'\
-      from $file &&
+      line=$(grep -m1 "$message" $file) &&
+      echo $line >$working_dir/deleted/lastline &&
+      sed -i /"$line"/d $file &&
+      echo Deleted \'$line\' from $file &&
       bash $0 --pull $course ||
       echo String \'$message\' not found
     else
@@ -155,15 +159,16 @@ case "$operation" in
       bash $0
     fi
     ;;
+
   "--add" | "-a")
   #  Append - Appends a string onto existing line in text file
   #  Requires input file ($course => $file), substring to search for ($args),
   #+ string to append ($addargs)"
     if [ "$args" != "" ] && [ "$file" != "" ] && [ "$addargs" != "" ]; then
-      if $(grep -qm 1 $args $file); then
-        sed -i s/"$(grep -m 1 $args $file)"/"$(grep -m 1 $args $file)$addargs"/g $file
-        echo Appended \'"$addargs"\' to\
-        $file: $args
+      line=$(grep -m 1 $args $file)
+      if ! [ -z $line ]; then
+        sed -i s/"$line"/"$line$addargs"/g $file
+        echo Appended \'"$addargs"\' to $file: $line
         bash $0 --pull $course
       else
         echo Could not find \'$args\'
@@ -173,9 +178,13 @@ case "$operation" in
       bash $0
     fi
     ;;
+
   "--list" | "-l")
   # List - Prints contents of text files in working directory
-    find . -maxdepth 1 -type f -exec echo -n "> " \; -exec basename {} \; -exec cat {} \;
+    for i in $files; do
+      echo '> '$i
+      cat $i
+    done
     ;;
   "--undo" | "-u")
   #  Undo - restores last deleted line to a file
@@ -193,6 +202,7 @@ case "$operation" in
       bash $0
     fi
     ;;
+
   "--rest" | "-R")
   # Restore - Replaces text file in deleted/, swapping it with existing one in working directory
   # Requires input file ($course => $file)
@@ -212,13 +222,14 @@ case "$operation" in
       bash $0
     fi
     ;;
+
   "--rep" | "-r" | "-z" | "--repl")
   #  Replace - Replaces a single word or line in input file with another one
   #  Requires input file ($course => $file), substring to replace ($args),
   #+ replacement string ($addargs)
     if [ "$args" != "" ] && [ "$file" != "" ] && [ "$addargs" != "" ]; then
-      if $(grep -qm 1 "$args" $file); then
-        matched_str=$(grep -m 1 "$args" $file)
+      matched_str=$(grep -m 1 "$args" $file)
+      if ! [ -z $matched_str ]; then
         echo $matched_str > $working_dir/deleted/lastline
         if [ "$operation" == "rep" ] || [ "$operation" == "-r" ]; then
           replacement=${matched_str/"$args"/"$addargs"}
@@ -226,8 +237,7 @@ case "$operation" in
           replacement="$addargs"
         fi
         sed -i s/"$matched_str"/"$replacement"/g $file
-        echo Changed $file: \'$matched_str\' \
-        to \'$replacement\'
+        echo Changed $file: \'$matched_str\' to \'$replacement\'
         bash $0 --pull $course
       else
         echo Unable to locate \'$args\'
@@ -236,107 +246,100 @@ case "$operation" in
       bash $0
     fi
     ;;
+
   "--find" | "-f")
   # Find - Seaches files for matching string
   # Requires string to search for ($course)
     if [ "$course" != "" ]; then
-      find $working_dir -maxdepth 1 -type f \( -exec grep -q "$course" {} \; -exec echo -n "> " \; -exec basename {} \; -exec grep "$course" {} \; \)
+      for i in $files; do
+        grep -H "$course" $i
+      done
     else
       echo Missing argument\(s\)
       bash $0
     fi
     ;;
+
   "--sort" | "-o")
-  # Sort - Prints file lines containing dates ranging from todays date +[0,24] in order
-  # Requires (optional) number of days to iterate through and search for ($course)
-    week_days="[M,T,W,R,F,S,U]"
+  # Sort - Prints file lines containing dates for this and next month
+    #week_days="[MTWRFSU]"
     d=$(date +%-d)
     m=$(date +%-m)
     y=$(date +%Y)
     nm=$(($m % 12 + 1))
     ny=$(($y + ($m + 1) / 12))
-    short_m=$(cal |egrep -o [A-Z][a-z]\{2\} |tr [A-Z] [a-z])
-    short_nm=$(cal $nm $ny |egrep -o [A-Z][a-z]\{2\} |tr [A-Z] [a-z])
+    short_m=$(date +%b)
+    short_m=${short_m,,}
+    short_nm=$(cal $nm $ny |grep -o [A-Z][a-z][a-z])
+    short_nm=${short_nm,,}
+    todo=$(echo -e '\033[07m')
+    today=$(echo -e '\033[04m\033[01m')
+    clr=$(echo -e '\033[0m')
+
     if [ "$course" == "-c" ]; then
-      length=24
       cal >thisMonth
       cal $nm $ny >nextMonth
-      if [ $d -lt 10 ]; then
-        replace="-- "
-      else
-        replace=" -- "
-      fi
-      sed -i s/\ $d$/"$replace"/g thisMonth
-      sed -i s/\ $d\ /"$replace"/g thisMonth
-			sed -i s/^$d\ /--\ /g thisMonth
-    elif [ "$course" == "" ] || [ "$course" -gt "24" ] || [ "$course" -lt "0" ]; then
-      length=7
-    else
-      length=$course
+      weekday=$(date +%a)
+      weekday=${weekday:0:2}
+      sed -i "s/\b$d\b/$today$d$clr/g" thisMonth
+      sed -i "s/\b$weekday\b/$today$weekday$clr/g" thisMonth
     fi
-    days_this_month=$(cal |egrep -v [a-z] |wc -w)
-    for i in $files; do
-      echo "> $(basename $i)" >>tmp
-      cat $i >>$working_dir/tmp
+
+    for file in $files; do
+      echo "> $file" >>tmp
+      cat $file >>tmp
     done
-    end_day=$(( ($d - 1 + $length) % days_this_month + 1 ))
-    end_month=$nm
-    echo Showing date range: $short_m $d - $short_nm $end_day
-    for ((i = $d; i <= (( $d + $length )); i++)); do
-      $(egrep -q $week_days$short_m[0-9]\{1,2\}$\|$week_days$short_nm[0-9]\{1,2\}$ tmp) || break
-      if [ $i -gt $days_this_month ]; then
-        day=$(( $i - $days_this_month ))
-        calMonth=nextMonth
-        currMonth=$short_nm
-      else
-        day=$i
-        calMonth=thisMonth
-        currMonth=$short_m
-      fi
-      for file in $files; do
-        if $(egrep -q $week_days$currMonth$day$ $file); then
-          echo  "> $(basename $file)"
-          egrep $week_days$currMonth$day$ $file |tee del
-          while read line; do
-            sed -i /"$line"/d $working_dir/tmp
-          done <del
-          rm del
-          if [ "$course" == "-c" ]; then
-            if [ "$day" -lt "10" ]; then
-              replace="xx "
-            else
-              replace=" xx "
-            fi
-            cat $calMonth |sed s/\ $day$/"$replace"/g |sed s/\ $day\ /"$replace"/g >calTmp
-						sed -i s/^$day\ /xx\ /g calTmp
-						mv calTmp $calMonth
-          fi
-        fi
-      done
-    done
+    grep -H "$short_m[0-9]\{1,2\}$" $files >month
+    grep -H "$short_nm[0-9]\{1,2\}$" $files >nMonth
+    sed -i 's/\([^:]*\):\(.*[^0-9$]\)\([0-9]\{1,2\}\)/\3\|\1\|\2\3/g' month nMonth
+    sort month -o month
+    sort nMonth -o nMonth
+    while read line; do
+      num=$(cut -d'|' -f1 <<<$line)
+      echo -n '> '
+      cut -d'|' -f2 <<<$line
+      task=$(cut -d'|' -f3- <<<$line)
+      echo $task
+      sed -i /"$task"/d tmp
+      [ "$course" == "-c" ] &&\
+      sed -i "s/\b$num\b/$(echo -e $todo)$num$(echo -e '\033[0m')/g" thisMonth
+    done <month
+    while read line; do
+      num=$(cut -d'|' -f1 <<<$line)
+      echo -n '> '
+      cut -d'|' -f2 <<<$line
+      task=$(cut -d'|' -f3- <<<$line)
+      echo $task
+      sed -i /"$task"/d tmp
+      [ "$course" == "-c" ] &&\
+      sed -i "s/\b$num\b/$(echo -e $todo)$num$(echo -e '\033[0m')/g" nextMonth
+    done <nMonth
+    echo
+    echo -n 'Unmateched:'
     lastline=
     while read line; do
-      if $(echo $line |grep -q \>) && $(echo $lastline |grep -q \>); then
-        sed -i "/$lastline/d" tmp 
+      if [[ $lastline =~ ^\>.* ]] && [[ $line =~ ^\>.* ]]; then
+        lastline=$line
+      else
+        echo $lastline
+        lastline=$line
       fi
+    done <tmp
+    if [[ $lastline =~ ^\>.* ]] && [[ $line =~ ^\>.* ]]; then
       lastline=$line
-    done <tmp 
-    if $(echo $lastline |grep -q \>); then
-      sed -i "/$lastline/d" tmp 
+    else
+      echo $lastline
+      lastline=$line
     fi
-    echo
-    if $(grep -q . tmp); then
-      echo Unmatched:
-      cat tmp
-      echo
-    fi
-    rm tmp
+    rm tmp month nMonth
     if [ "$course" == "-c" ]; then
-      cat thisMonth |sed '$ d'
+      echo
+      cat thisMonth
       cat nextMonth
       rm thisMonth nextMonth
     fi
     ;;
+
   "--conf" | "-C")
   # Conf - Prints config settings
     i=1
@@ -346,15 +349,16 @@ case "$operation" in
       cf=$(echo $files |cut -d' ' -f$i)
       cc=$(echo $courses |cut -d' ' -f$i)
       echo -ne "$cc -> $cf"
-
       (( i++ ))
     done
     echo
   ;;
+
   "--help" | "-h")
   # Help - Prints info on operation usage
     echo "$usage"
   ;;
+
   # Default - Prints minimal usage information
   *)
     echo "Usage: $(basename $0) -acCDfhpPrzRu [-o [-c/N]] [COURSE] [ARGS] [ADDARGS]"
