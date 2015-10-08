@@ -1,3 +1,7 @@
+#v1.4.1 - Oct, 2015  
+  \- Restyled usage  
+  \- Refactored -C, --conf  
+
 #v1.4.0 - Oct, 2015  
   \- Various small optimizations in mutilple calls to external programs  
   \- Rewrote -o, --sort to cut runtime down bto a quarter of the time  
