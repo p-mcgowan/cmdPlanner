@@ -58,39 +58,36 @@ else
   file=$(echo $files |cut -d' ' -f$pos)
 fi
 
+shortUsage="\
+Usage: $(basename $0) [-acDfplrzRuCh] [-o [-c]] [COURSE [ARGS [ADDARGS]]]"
+
 usage="\
-Usage: $(basename $0) -acCDfhpPrzRu [-o [-c/N]] [COURSE] [ARGS] [ADDARGS]
- -a, --add COURSE ARGS
-      append ADDARGS to first line containing ARGS in COURSE
- -c, --clear COURSE ARGS
-      delete first line containing ARGS from COURSE, temporarily
-      storing it in working_dir/deleted/lastline
- -D, --del COURSE
-      delete COURSE file, temporarily storing it in working_dir/deleted/
- -f, --find ARGS
-      print file lines containing ARGS
- -h, --help
-      show this menu
- -l, --list
-      print all files
- -p, --push COURSE ARGS
-      append ARGS to COURSE
- -P, --pull COURSE
-      read from COURSE or print all with no COURSE
- -r, --rep COURSE ARGS ADDARGS
-      replace first occurence of ARGS with ADDARGS
- -z, --repl COURSE ARGS ADDARGS
-      same as -r, but relplaces the whole line
- -R, --rest COURSE 
-      swap deleted COURSE file with one in working_dir/deleted
- -o, --sort [-c]
-      print tasks in chronological order if the have monthDay appended to
-      them (eg nov15 or sep17). With -c supllied, prints this and next month
-      calendars, highlighting tasks
- -u, --undo COURSE
-      append most recently cleared line to COURSE
- -C, --conf
-      print config settings
+Command line organizer and note-taking program
+
+$shortUsage
+
+Options
+ -a, --add COURSE ARGS ADDARGS  Append ADDARGS to the first line containing 
+                                ARGS in COURSE
+ -c, --clear COURSE ARGS        Delete first line containing ARGS from COURSE, 
+                                temporarily storing it in working_dir/deleted/lastline
+ -D, --del COURSE               Delete COURSE file, temporarily storing it in
+                                working_dir/deleted/
+ -f, --find [COURSE] ARGS       Print COURSE or all file lines containing ARGS
+ -p, --push COURSE ARGS         Append ARGS to COURSE
+ -l, --list [COURSE]            Read from COURSE or print all
+ -r, --rep COURSE ARGS ADDARGS  Replace first occurence of ARGS with ADDARGS 
+                                in COURSE
+ -z, --repl COURSE ARGS ADDARGS Like -r, but replaces the whole line
+ -R, --rest COURSE              Swap deleted COURSE file with one in 
+                                working_dir/deleted
+ -o, --sort [-c]                Print tasks in chronological order if the have 
+                                monthDay appended to them (eg nov15 or sep17). With 
+                                -c supllied, prints this and next month calendars, 
+                                highlighting tasks
+ -u, --undo COURSE              Append most recently cleared line to COURSE
+ -C, --conf                     Print config settings
+ -h, --help                     Show this menu
 "
 
 # Operation selection
@@ -108,14 +105,17 @@ case "$operation" in
     fi
     ;;
 
-  "--pull" | "-P")
-  #  Pull - Prints contents of a file or of all files (with no params)
+  "--list" | "-l")
+  #  List - Prints contents of a file or of all files (with no params)
   #  Requires (optional) file to read from ($course => $file)
     if [ "$file" == "" ]; then
-      bash $0 list
+      for i in $files; do
+        echo '> '$i
+        cat $i
+      done
     else
       if [ -f $working_dir/$file ]; then
-        echo \> $(basename $file)
+        echo \> $file
         cat $file
       else
         echo File \'$file\' not found
@@ -341,17 +341,13 @@ case "$operation" in
     ;;
 
   "--conf" | "-C")
-  # Conf - Prints config settings
-    i=1
-    j=$(echo $files |wc -w)
-    while [ $i -le $j ]; do
-      [ $i == 1 ] || echo
-      cf=$(echo $files |cut -d' ' -f$i)
-      cc=$(echo $courses |cut -d' ' -f$i)
-      echo -ne "$cc -> $cf"
-      (( i++ ))
+  # Conf - Prints or modifies config settings
+    cf=($files)
+    cc=($courses)
+    max=0
+    for ((i = 0; i < ${#cf[*]}; i++)); do
+      echo "${cc[$i]} -> ${cf[$i]}"
     done
-    echo
   ;;
 
   "--help" | "-h")
@@ -361,7 +357,7 @@ case "$operation" in
 
   # Default - Prints minimal usage information
   *)
-    echo "Usage: $(basename $0) -acCDfhpPrzRu [-o [-c/N]] [COURSE] [ARGS] [ADDARGS]"
+    echo "$shortUsage"
     echo "Type cnotes -h or cnotes --help for more info"
   ;;
 esac
