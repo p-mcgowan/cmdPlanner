@@ -1,3 +1,6 @@
+#v1.4.2 - Oct, 2015  
+  \- Replaced --pull with --list
+
 #v1.4.1 - Oct, 2015  
   \- Restyled and reworded usage  
   \- Refactored -C, --conf  
