@@ -71,7 +71,7 @@ Options
                                 ARGS in COURSE
  -c, --clear COURSE ARGS        Delete first line containing ARGS from COURSE, 
                                 temporarily storing it in working_dir/deleted/lastline
- -D, --del COURSE               Delete COURSE file, temporarily storing it in
+ -D, --del COURSE               Delete contents of COURSE, storing backup in
                                 working_dir/deleted/
  -f, --find [COURSE] ARGS       Print COURSE or all file lines containing ARGS
  -p, --push COURSE ARGS         Append ARGS to COURSE
@@ -128,7 +128,7 @@ case "$operation" in
   #+ Stores file in deleted/ until next deletion operation.
   #  Requires input file ($course => $file)
     if [ "$file" != "" ]; then
-      echo -n "Really delete $file? [Y/n]: "
+      echo -n "Really clear $file? [y/N]: "
       read confirm
       if [ "$confirm" == "y" ] || [ "$confirm" == "Y" ]; then
         mv $file deleted/
