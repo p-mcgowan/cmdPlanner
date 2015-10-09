@@ -1,5 +1,5 @@
 #v1.4.1 - Oct, 2015  
-  \- Restyled usage  
+  \- Restyled and reworded usage  
   \- Refactored -C, --conf  
 
 #v1.4.0 - Oct, 2015  
