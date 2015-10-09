@@ -98,7 +98,7 @@ case "$operation" in
     if [ "$file" != "" ] && [ "$message" != "" ] && [ "$course" != "" ]; then
       echo "$message" >> $file
       echo Added \'$message\' to $file
-      bash $0 --pull $course
+      bash $0 --list $course
     else
       echo Invalid format
       bash $0
@@ -152,7 +152,7 @@ case "$operation" in
       echo $line >$working_dir/deleted/lastline &&
       sed -i /"$line"/d $file &&
       echo Deleted \'$line\' from $file &&
-      bash $0 --pull $course ||
+      bash $0 --list $course ||
       echo String \'$message\' not found
     else
       echo Invalid format
@@ -169,7 +169,7 @@ case "$operation" in
       if ! [ -z $line ]; then
         sed -i s/"$line"/"$line$addargs"/g $file
         echo Appended \'"$addargs"\' to $file: $line
-        bash $0 --pull $course
+        bash $0 --list $course
       else
         echo Could not find \'$args\'
       fi
@@ -194,7 +194,7 @@ case "$operation" in
         cat $working_dir/deleted/lastline >> $file
         echo Appended \'$(cat $working_dir/deleted/lastline)\'\
         to $file
-        bash $0 --pull $course
+        bash $0 --list $course
       else
         echo Last line does not exist
       fi
@@ -214,7 +214,7 @@ case "$operation" in
         fi
         mv $working_dir/tmp $working_dir/$file
         echo Restored $file
-        bash $0 --pull $course
+        bash $0 --list $course
       else
         echo Could not restore $file: does not exist
       fi
@@ -238,7 +238,7 @@ case "$operation" in
         fi
         sed -i s/"$matched_str"/"$replacement"/g $file
         echo Changed $file: \'$matched_str\' to \'$replacement\'
-        bash $0 --pull $course
+        bash $0 --list $course
       else
         echo Unable to locate \'$args\'
       fi
