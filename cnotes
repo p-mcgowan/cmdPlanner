@@ -36,9 +36,13 @@ source $working_dir/config/cnotes.conf
 mkdir -p $working_dir/deleted
 cd $working_dir
 
+function error {
+  >&2 echo "$(basename $0): ""$*"
+}
+
 # Parameter pulling
 operation="$1"
-course="$2"
+file="$2"
 args="$3"
 shift 
 shift
@@ -47,19 +51,29 @@ shift
 addargs="$*"
 
 # Course selection for in/output file
-touch $files
-conf_courses=" $courses "
-conf_search="\<$course\>"
+touch $targets
 
-if [ "$course" == "" ]; then
-  file=
+if [ -z "$file" ]; then
+  target=
 else
-  pos=$(($(echo $conf_courses |sed "s/[^ ]*$conf_search.*//g" |wc -w) + 1))
-  file=$(echo $files |cut -d' ' -f$pos)
+  if $(grep -q "\b$file\b" <<<$files); then
+    pos=$(echo $files |sed "s/\b$file\b.*/$file/g" |wc -w)
+    target=$(echo $targets |cut -d' ' -f$pos)
+  else
+    target=
+  fi
+fi
+
+# check that conf list sizes are the same
+nt=($targets)
+nf=($files)
+if [ ${#nf[*]} -ne ${#nt[*]} ]; then
+  error "Config error: files and targets are different lengths"
+  exit 1
 fi
 
 shortUsage="\
-Usage: $(basename $0) [-acDfplrzRuCh] [-o [-c]] [COURSE [ARGS [ADDARGS]]]"
+Usage: $(basename $0) [-acCDfhlprRuz] [-o [-c]] [FILE] [ARGS]..."
 
 usage="\
 Command line organizer and note-taking program
@@ -67,202 +81,168 @@ Command line organizer and note-taking program
 $shortUsage
 
 Options
- -a, --add COURSE ARGS ADDARGS  Append ADDARGS to the first line containing 
-                                ARGS in COURSE
- -c, --clear COURSE ARGS        Delete first line containing ARGS from COURSE, 
-                                temporarily storing it in working_dir/deleted/lastline
- -D, --del COURSE               Delete contents of COURSE, storing backup in
+ -a, --add FILE LINE STR        Append STR to the first line containing 
+                                LINE in FILE
+ -c, --clear FILE STR           Delete first line containing STR from FILE, 
+                                temporarily storing it in 
+                                working_dir/deleted/lastline
+ -D, --del FILE                 Delete contents of FILE, storing a backup in
                                 working_dir/deleted/
- -f, --find [COURSE] ARGS       Print COURSE or all file lines containing ARGS
- -p, --push COURSE ARGS         Append ARGS to COURSE
- -l, --list [COURSE]            Read from COURSE or print all
- -r, --rep COURSE ARGS ADDARGS  Replace first occurence of ARGS with ADDARGS 
-                                in COURSE
- -z, --repl COURSE ARGS ADDARGS Like -r, but replaces the whole line
- -R, --rest COURSE              Swap deleted COURSE file with one in 
+ -f, --find [FILE] STR          Print FILE or all file lines containing STR
+ -p, --push FILE STR            Append STR to FILE
+ -l, --list [FILE]              Print FILE or print all files
+ -r, --rep FILE STR REPLACE     Replace first occurence of STR with REPLACE
+                                in FILE
+ -z, --repl FILE STR REPLACE    Like -r, but replaces the whole line
+ -R, --rest FILE                Swap deleted FILE file with one in 
                                 working_dir/deleted
  -o, --sort [-c]                Print tasks in chronological order if the have 
                                 monthDay appended to them (eg nov15 or sep17). With 
                                 -c supllied, prints this and next month calendars, 
                                 highlighting tasks
- -u, --undo COURSE              Append most recently cleared line to COURSE
+ -u, --undo FILE                Append most recently cleared line to FILE
  -C, --conf                     Print config settings
  -h, --help                     Show this menu
 "
 
-# Operation selection
-case "$operation" in
-  "--push" | "-p")
-  #  Push - Sends input to text file
-  #  Requires input ($message), file ($course => $file) 
-    if [ "$file" != "" ] && [ "$message" != "" ] && [ "$course" != "" ]; then
-      echo "$message" >> $file
-      echo Added \'$message\' to $file
-      bash $0 --list $course
+case $operation in
+  # -a, --add FILE LINE STR
+  # Append - Appends a string onto existing line in text file
+  --add | -a)
+    if ! [ -z "$args" ] && ! [ -z "$target" ] && ! [ -z "$addargs" ]; then
+      line=$(grep -m 1 $args $target)
+      if ! [ -z $line ]; then
+        sed -i s/"$line"/"$line$addargs"/g $target
+        echo Appended \'"$addargs"\' to $target: $line
+        bash $0 --list $file
+      else
+        error "Could not find '$args' in '$file'"
+      fi
     else
-      echo Invalid format
+      case "" in
+        $file) error "FILE cannot be null" ;;
+        $target) error "Could not find file '$file'" ;;
+        $args) error "LINE cannot be null" ;;
+        $addargs) error "STR cannot be null" ;;
+      esac
       bash $0
     fi
-    ;;
+  ;;
 
-  "--list" | "-l")
-  #  List - Prints contents of a file or of all files (with no params)
-  #  Requires (optional) file to read from ($course => $file)
-    if [ "$file" == "" ]; then
-      for i in $files; do
+  # -c, --clear FILE STR
+  # Clear - Removes a single line from FILE, determined by the first line
+  # containing STR
+  --clear | -c)
+    if ! [ -z "$message" ] && ! [ -z "$target" ]; then
+      line=$(grep -m1 "$message" $target) &&
+      echo $line >$working_dir/deleted/lastline &&
+      sed -i /"$line"/d $target &&
+      echo Deleted \'$line\' from $target &&
+      bash $0 --list $file ||
+      error "String '$message' not found in '$file'"
+    else
+      case "" in
+        $file) error "FILE cannot be null" ;;
+        $target) error "Could not find file '$file'" ;;
+        $message) error "STR cannot be null" ;;
+      esac
+      bash $0
+    fi
+  ;;
+
+  # Conf - Prints or modifies config settings
+  --conf | -C)
+    cf=($targets)
+    cc=($files)
+    spc=" "
+    max=0
+    for ((i = 0; i < ${#cc[*]}; i++)); do
+      if [ ${#cc[$i]} -gt $max ]; then
+        max=${#cc[$i]}
+      fi
+    done
+    while [ ${#spc} -lt $max ]; do
+      spc=$spc$spc
+    done
+    for ((i = 0; i < ${#cc[*]}; i++)); do
+      spaces=$(($max - ${#cc[$i]}))
+      echo "${spc:0:$spaces}${cc[$i]} -> ${cf[$i]}"
+    done
+  ;;
+
+  # -D, --del FILE
+  # Delete - Removes entire contents of input file and replaces with empty one.
+  # Stores file in deleted/ until next deletion operation.
+  --del | -D)
+    if ! [ -z "$target" ]; then
+      echo -n "Really clear $target? [y/N]: "
+      read confirm
+      if [ "$confirm" == "y" ] || [ "$confirm" == "Y" ]; then
+        mv $target deleted/
+        touch $target
+        echo Sent $target\
+        to $working_dir/deleted/$target
+        bash $0 --list
+      fi
+    else
+      case "" in
+        $file) error "FILE cannot be null" ;;
+        $target) error "Could not find file '$file'" ;;
+      esac
+      bash $0
+    fi
+  ;;
+
+  # -f, --find [FILE] STR
+  # Find - Seaches files for matching string
+  --find | -f)
+    if ! [ -z "$file" ]; then
+      if [ -z "$args" ]; then
+        if ! $(grep -H "$file" $targets); then
+          error "Could not find file '$file'"
+        fi
+      else
+        if ! [ -z $target ]; then
+          grep "$args" $target || echo "Could not find '$args' in '$target'"
+        else
+          error "Could not find file '$file'"
+        fi
+      fi
+    else
+      case "" in
+        $file) error "STR cannot be null" ;;
+      esac
+      bash $0
+    fi
+  ;;
+
+  # Help - Prints usage
+  --help | -h)
+    echo "$usage"
+  ;;
+
+  # -l, --list [FILE] 
+  # List - Prints contents of a file or of all files (with no params)
+  # Requires (optional) file to read from ($file => $target)
+  --list | -l)
+    if [ -z "$file" ]; then
+      for i in $targets; do
         echo '> '$i
         cat $i
       done
     else
-      if [ -f $working_dir/$file ]; then
-        echo \> $file
-        cat $file
+      if [ -f $working_dir/$target ]; then
+        echo \> $target
+        cat $target
       else
-        echo File \'$file\' not found
+        error "File '$file' not found"
       fi
     fi
-    ;;
+  ;;
 
-  "-D" | "--del")
-  #  Delete - Removes entire contents of input file and replaces with empty one.
-  #+ Stores file in deleted/ until next deletion operation.
-  #  Requires input file ($course => $file)
-    if [ "$file" != "" ]; then
-      echo -n "Really clear $file? [y/N]: "
-      read confirm
-      if [ "$confirm" == "y" ] || [ "$confirm" == "Y" ]; then
-        mv $file deleted/
-        touch $file
-        echo Sent $file\
-        to $working_dir/deleted/$file
-        bash $0 --list
-      fi
-    else
-      echo Invalid format
-      bash $0
-    fi
-    ;;
-
-  "--clear" | "-c")
-  #  Clear - Removes a single line from file, determined by the first string
-  #+ containing input substring
-  #  Requires input file ($course => $file) and substring ($message)
-    if [ "$message" != "" ] && [ "$file" != "" ]; then
-      line=$(grep -m1 "$message" $file) &&
-      echo $line >$working_dir/deleted/lastline &&
-      sed -i /"$line"/d $file &&
-      echo Deleted \'$line\' from $file &&
-      bash $0 --list $course ||
-      echo String \'$message\' not found
-    else
-      echo Invalid format
-      bash $0
-    fi
-    ;;
-
-  "--add" | "-a")
-  #  Append - Appends a string onto existing line in text file
-  #  Requires input file ($course => $file), substring to search for ($args),
-  #+ string to append ($addargs)"
-    if [ "$args" != "" ] && [ "$file" != "" ] && [ "$addargs" != "" ]; then
-      line=$(grep -m 1 $args $file)
-      if ! [ -z $line ]; then
-        sed -i s/"$line"/"$line$addargs"/g $file
-        echo Appended \'"$addargs"\' to $file: $line
-        bash $0 --list $course
-      else
-        echo Could not find \'$args\'
-      fi
-    else
-      echo Invalid format
-      bash $0
-    fi
-    ;;
-
-  "--list" | "-l")
-  # List - Prints contents of text files in working directory
-    for i in $files; do
-      echo '> '$i
-      cat $i
-    done
-    ;;
-  "--undo" | "-u")
-  #  Undo - restores last deleted line to a file
-  #  Requires input file ($course ==> $file) 
-    if [ "$file" != "" ]; then
-      if $(grep -q . $working_dir/deleted/lastline); then
-        cat $working_dir/deleted/lastline >> $file
-        echo Appended \'$(cat $working_dir/deleted/lastline)\'\
-        to $file
-        bash $0 --list $course
-      else
-        echo Last line does not exist
-      fi
-    else
-      bash $0
-    fi
-    ;;
-
-  "--rest" | "-R")
-  # Restore - Replaces text file in deleted/, swapping it with existing one in working directory
-  # Requires input file ($course => $file)
-    if [ "$file" != "" ]; then
-      if [ -f $working_dir/deleted/$file ]; then
-        mv $working_dir/deleted/$file $working_dir/tmp
-        if [ -f $working_dir/$file ]; then
-          mv $working_dir/$file $working_dir/deleted/
-        fi
-        mv $working_dir/tmp $working_dir/$file
-        echo Restored $file
-        bash $0 --list $course
-      else
-        echo Could not restore $file: does not exist
-      fi
-    else
-      bash $0
-    fi
-    ;;
-
-  "--rep" | "-r" | "-z" | "--repl")
-  #  Replace - Replaces a single word or line in input file with another one
-  #  Requires input file ($course => $file), substring to replace ($args),
-  #+ replacement string ($addargs)
-    if [ "$args" != "" ] && [ "$file" != "" ] && [ "$addargs" != "" ]; then
-      matched_str=$(grep -m 1 "$args" $file)
-      if ! [ -z $matched_str ]; then
-        echo $matched_str > $working_dir/deleted/lastline
-        if [ "$operation" == "rep" ] || [ "$operation" == "-r" ]; then
-          replacement=${matched_str/"$args"/"$addargs"}
-        else
-          replacement="$addargs"
-        fi
-        sed -i s/"$matched_str"/"$replacement"/g $file
-        echo Changed $file: \'$matched_str\' to \'$replacement\'
-        bash $0 --list $course
-      else
-        echo Unable to locate \'$args\'
-      fi
-    else
-      bash $0
-    fi
-    ;;
-
-  "--find" | "-f")
-  # Find - Seaches files for matching string
-  # Requires string to search for ($course)
-    if [ "$course" != "" ]; then
-      for i in $files; do
-        grep -H "$course" $i
-      done
-    else
-      echo Missing argument\(s\)
-      bash $0
-    fi
-    ;;
-
-  "--sort" | "-o")
+  # -o, --sort [-c]
   # Sort - Prints file lines containing dates for this and next month
-    #week_days="[MTWRFSU]"
+  --sort | -o)
     d=$(date +%-d)
     m=$(date +%-m)
     y=$(date +%Y)
@@ -276,7 +256,7 @@ case "$operation" in
     today=$(echo -e '\033[04m\033[01m')
     clr=$(echo -e '\033[0m')
 
-    if [ "$course" == "-c" ]; then
+    if [ "$file" == "-c" ]; then
       cal >thisMonth
       cal $nm $ny >nextMonth
       weekday=$(date +%a)
@@ -284,13 +264,15 @@ case "$operation" in
       sed -i "s/\b$d\b/$today$d$clr/g" thisMonth
       sed -i "s/\b$weekday\b/$today$weekday$clr/g" thisMonth
     fi
-
-    for file in $files; do
-      echo "> $file" >>tmp
-      cat $file >>tmp
+    for filename in $targets; do
+      if [ -s $filename ]; then
+        echo "> $filename" >>tmp
+        cat $filename >>tmp
+      fi
     done
-    grep -H "$short_m[0-9]\{1,2\}$" $files >month
-    grep -H "$short_nm[0-9]\{1,2\}$" $files >nMonth
+
+    grep -H "$short_m[0-9]\{1,2\}$" $targets >month
+    grep -H "$short_nm[0-9]\{1,2\}$" $targets >nMonth
     sed -i 's/\([^:]*\):\(.*[^0-9$]\)\([0-9]\{1,2\}\)/\3\|\1\|\2\3/g' month nMonth
     sort month -o month
     sort nMonth -o nMonth
@@ -301,8 +283,9 @@ case "$operation" in
       task=$(cut -d'|' -f3- <<<$line)
       echo $task
       sed -i /"$task"/d tmp
-      [ "$course" == "-c" ] &&\
-      sed -i "s/\b$num\b/$(echo -e $todo)$num$(echo -e '\033[0m')/g" thisMonth
+      if [ "$file" == "-c" ]; then
+        sed -i "s/\b$num\b/$(echo -e $todo)$num$(echo -e '\033[0m')/g" thisMonth
+      fi
     done <month
     while read line; do
       num=$(cut -d'|' -f1 <<<$line)
@@ -311,11 +294,13 @@ case "$operation" in
       task=$(cut -d'|' -f3- <<<$line)
       echo $task
       sed -i /"$task"/d tmp
-      [ "$course" == "-c" ] &&\
-      sed -i "s/\b$num\b/$(echo -e $todo)$num$(echo -e '\033[0m')/g" nextMonth
+      if [ "$file" == "-c" ]; then
+        sed -i "s/\b$num\b/$(echo -e $todo)$num$(echo -e '\033[0m')/g" nextMonth
+      fi
     done <nMonth
     echo
     echo -n 'Unmateched:'
+
     lastline=
     while read line; do
       if [[ $lastline =~ ^\>.* ]] && [[ $line =~ ^\>.* ]]; then
@@ -331,28 +316,106 @@ case "$operation" in
       echo $lastline
       lastline=$line
     fi
+
     rm tmp month nMonth
-    if [ "$course" == "-c" ]; then
+    if [ "$file" == "-c" ]; then
       echo
       cat thisMonth
       cat nextMonth
       rm thisMonth nextMonth
     fi
-    ;;
-
-  "--conf" | "-C")
-  # Conf - Prints or modifies config settings
-    cf=($files)
-    cc=($courses)
-    max=0
-    for ((i = 0; i < ${#cf[*]}; i++)); do
-      echo "${cc[$i]} -> ${cf[$i]}"
-    done
   ;;
 
-  "--help" | "-h")
-  # Help - Prints info on operation usage
-    echo "$usage"
+  # -p, --push FILE STR
+  # Push - Sends input to text file
+  --push | -p)
+    if ! [ -z "$target" ] && ! [ -z "$message" ] && ! [ -z "$file" ]; then
+      echo "$message" >> $target
+      echo Added \'$message\' to $target
+      bash $0 --list $file
+    else
+      case "" in
+        $file) error "FILE cannot be null" ;;
+        $target) error "Could not find file '$file'" ;;
+        $message) error "ARGS cannot be null" ;;
+      esac
+      bash $0
+    fi
+  ;;
+
+  # -r|-z, --rep|--repl FILE STR REPLACE
+  # Replace - Replaces a single word or line in input file with another one
+  --rep | -r | -z | --repl)
+    if ! [ -z "$args" ] && ! [ -z  "$target" ] && ! [ -z "$addargs" ]; then
+      matched_str=$(grep -m 1 "$args" $target)
+      if ! [ -z "$matched_str" ]; then
+        echo $matched_str > $working_dir/deleted/lastline
+        if [ "$operation" == "rep" ] || [ "$operation" == "-r" ]; then
+          replacement=${matched_str/"$args"/"$addargs"}
+        else
+          replacement="$addargs"
+        fi
+        sed -i s/"$matched_str"/"$replacement"/g $target
+        echo Changed $target: \'$matched_str\' to \'$replacement\'
+        bash $0 --list $file
+      else
+        echo Unable to locate \'$args\'
+      fi
+    else
+      case "" in
+        $file) error "FILE cannot be null" ;;
+        $target) error "Could not find file '$file'" ;;
+        $args) error "STR cannot be null" ;;
+        $addargs) error "REPLACE cannot be null" ;;
+      esac
+      bash $0
+    fi
+  ;;
+
+  # -R, --rest FILE
+  # Restore - Replaces text file in deleted/, swapping it with
+  # existing one in working directory
+  --rest | -R)
+    if ! [ -z "$target" ]; then
+      if [ -f $working_dir/deleted/$target ]; then
+        mv $working_dir/deleted/$target $working_dir/tmp
+        if [ -f $working_dir/$target ]; then
+          mv $working_dir/$target $working_dir/deleted/
+        fi
+        mv $working_dir/tmp $working_dir/$target
+        echo Restored $target
+        bash $0 --list $file
+      else
+        echo Could not restore: $target does not exist
+      fi
+    else
+      case "" in
+        $file) error "FILE cannot be null" ;;
+        $target) error "Could not find file '$file'" ;;
+      esac
+      bash $0
+    fi
+  ;;
+
+  # -u, --undo FILE
+  # Undo - restores last deleted line to a file
+  --undo | -u)
+    if ! [ -z "$target" ]; then
+      if $(grep -q . $working_dir/deleted/lastline); then
+        cat $working_dir/deleted/lastline >> $target
+        echo Appended \'$(cat $working_dir/deleted/lastline)\'\
+        to $target
+        bash $0 --list $file
+      else
+        echo Cannot undo: last line does not exist
+      fi
+    else
+      case "" in
+        $file) error "FILE cannot be null" ;;
+        $target) error "Could not find file '$file'" ;;
+      esac
+      bash $0
+    fi
   ;;
 
   # Default - Prints minimal usage information
