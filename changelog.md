@@ -1,3 +1,7 @@
+#v1.5.0 - Oct, 2015  
+  \- Refactored and reorganized methods  
+  \- Added more verbose error reporting  
+
 #v1.4.2 - Oct, 2015  
   \- Replaced --pull with --list
 
