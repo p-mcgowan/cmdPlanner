@@ -1,3 +1,7 @@
+#v1.5.1 - Jan, 2017
+  \- Formatting and refactoring  
+  \- Changed default sort option behaviour
+
 #v1.5.0 - Oct, 2015  
   \- Refactored and reorganized methods  
   \- Added more verbose error reporting  

@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# fix dates like 09
+
+
+debug=true
+if $debug; then
+  logfile=~/tmp/$(basename $0)_debug.log
+  echo =================================================== >$logfile
+  exec 2>>$logfile
+  set -xv
+fi
+
 # Basic scheduling program
 working_dir=~/coursenotes
 mkdir -p $working_dir/config
@@ -111,7 +122,7 @@ case $operation in
   --add | -a)
     if ! [ -z "$args" ] && ! [ -z "$target" ] && ! [ -z "$addargs" ]; then
       line=$(grep -m 1 $args $target)
-      if ! [ -z $line ]; then
+      if ! [ -z "$line" ]; then
         sed -i s/"$line"/"$line$addargs"/g $target
         echo Appended \'"$addargs"\' to $target: $line
         bash $0 --list $file
@@ -136,7 +147,7 @@ case $operation in
     if ! [ -z "$message" ] && ! [ -z "$target" ]; then
       line=$(grep -m1 "$message" $target) &&
       echo $line >$working_dir/deleted/lastline &&
-      sed -i /"$line"/d $target &&
+      sed -i /^"$line"$/d $target &&
       echo Deleted \'$line\' from $target &&
       bash $0 --list $file ||
       error "String '$message' not found in '$file'"
@@ -227,12 +238,13 @@ case $operation in
   --list | -l)
     if [ -z "$file" ]; then
       for i in $targets; do
-        echo '> '$i
+        echo ">> $i"
         cat $i
+        echo
       done
     else
       if [ -f $working_dir/$target ]; then
-        echo \> $target
+        echo ">> $target"
         cat $target
       else
         error "File '$file' not found"
@@ -242,7 +254,7 @@ case $operation in
 
   # -o, --sort [-c]
   # Sort - Prints file lines containing dates for this and next month
-  --sort | -o)
+  --sort | -o | -O)
     d=$(date +%-d)
     m=$(date +%-m)
     y=$(date +%Y)
@@ -298,23 +310,25 @@ case $operation in
         sed -i "s/\b$num\b/$(echo -e $todo)$num$(echo -e '\033[0m')/g" nextMonth
       fi
     done <nMonth
-    echo
-    echo -n 'Unmateched:'
+    if [ $operation == -O ]; then
+      echo
+      echo -n 'Unmateched:'
 
-    lastline=
-    while read line; do
+      lastline=
+      while read line; do
+        if [[ $lastline =~ ^\>.* ]] && [[ $line =~ ^\>.* ]]; then
+          lastline=$line
+        else
+          echo $lastline
+          lastline=$line
+        fi
+      done <tmp
       if [[ $lastline =~ ^\>.* ]] && [[ $line =~ ^\>.* ]]; then
         lastline=$line
       else
         echo $lastline
         lastline=$line
       fi
-    done <tmp
-    if [[ $lastline =~ ^\>.* ]] && [[ $line =~ ^\>.* ]]; then
-      lastline=$line
-    else
-      echo $lastline
-      lastline=$line
     fi
 
     rm tmp month nMonth
