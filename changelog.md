@@ -1,3 +1,7 @@
+#v1.5.2 - Jan, 2017
+  \- Fixed forward slash parsing.  
+  \- Fixed leading zero parsing in dates.  
+
 #v1.5.1 - Jan, 2017
   \- Formatting and refactoring  
   \- Changed default sort option behaviour
