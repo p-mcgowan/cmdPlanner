@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# fix dates like 09
-
-
 debug=true
 if $debug; then
   logfile=~/tmp/$(basename $0)_debug.log
@@ -55,7 +52,7 @@ function error {
 operation="$1"
 file="$2"
 args="$3"
-shift 
+shift
 shift
 message="$*"
 shift
@@ -92,10 +89,10 @@ Command line organizer and note-taking program
 $shortUsage
 
 Options
- -a, --add FILE LINE STR        Append STR to the first line containing 
+ -a, --add FILE LINE STR        Append STR to the first line containing
                                 LINE in FILE
- -c, --clear FILE STR           Delete first line containing STR from FILE, 
-                                temporarily storing it in 
+ -c, --clear FILE STR           Delete first line containing STR from FILE,
+                                temporarily storing it in
                                 working_dir/deleted/lastline
  -D, --del FILE                 Delete contents of FILE, storing a backup in
                                 working_dir/deleted/
@@ -105,11 +102,11 @@ Options
  -r, --rep FILE STR REPLACE     Replace first occurence of STR with REPLACE
                                 in FILE
  -z, --repl FILE STR REPLACE    Like -r, but replaces the whole line
- -R, --rest FILE                Swap deleted FILE file with one in 
+ -R, --rest FILE                Swap deleted FILE file with one in
                                 working_dir/deleted
- -o, --sort [-c]                Print tasks in chronological order if the have 
-                                monthDay appended to them (eg nov15 or sep17). With 
-                                -c supllied, prints this and next month calendars, 
+ -o, --sort [-c]                Print tasks in chronological order if the have
+                                monthDay appended to them (eg nov15 or sep17). With
+                                -c supllied, prints this and next month calendars,
                                 highlighting tasks
  -u, --undo FILE                Append most recently cleared line to FILE
  -C, --conf                     Print config settings
@@ -232,7 +229,7 @@ case $operation in
     echo "$usage"
   ;;
 
-  # -l, --list [FILE] 
+  # -l, --list [FILE]
   # List - Prints contents of a file or of all files (with no params)
   # Requires (optional) file to read from ($file => $target)
   --list | -l)
@@ -285,7 +282,7 @@ case $operation in
 
     grep -H "$short_m[0-9]\{1,2\}$" $targets >month
     grep -H "$short_nm[0-9]\{1,2\}$" $targets >nMonth
-    sed -i 's/\([^:]*\):\(.*[^0-9$]\)\([0-9]\{1,2\}\)/\3\|\1\|\2\3/g' month nMonth
+    sed -i 's|\([^:]*\):\(.*[^0-9$]\)\([0-9]\{1,2\}\)|\3\|\1\|\2\3|g' month nMonth
     sort month -o month
     sort nMonth -o nMonth
     while read line; do
@@ -296,7 +293,7 @@ case $operation in
       echo $task
       sed -i /"$task"/d tmp
       if [ "$file" == "-c" ]; then
-        sed -i "s/\b$num\b/$(echo -e $todo)$num$(echo -e '\033[0m')/g" thisMonth
+        sed -i "s|\b[0]*$num\b|$(echo -e $todo)$num$(echo -e '\033[0m')|g" thisMonth
       fi
     done <month
     while read line; do
@@ -307,7 +304,7 @@ case $operation in
       echo $task
       sed -i /"$task"/d tmp
       if [ "$file" == "-c" ]; then
-        sed -i "s/\b$num\b/$(echo -e $todo)$num$(echo -e '\033[0m')/g" nextMonth
+        sed -i "s|\b[0]*$num\b|$(echo -e $todo)$num$(echo -e '\033[0m')|g" nextMonth
       fi
     done <nMonth
     if [ $operation == -O ]; then
