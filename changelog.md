@@ -1,3 +1,6 @@
+#v1.5.3 - Feb, 2017
+  \- Fixed leading zero parsing in dates.  
+
 #v1.5.2 - Jan, 2017
   \- Fixed forward slash parsing.  
   \- Fixed leading zero parsing in dates.  
