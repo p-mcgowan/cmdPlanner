@@ -287,24 +287,26 @@ case $operation in
     sort nMonth -o nMonth
     while read line; do
       num=$(cut -d'|' -f1 <<<$line)
+      num=$((10#$num + 0))
       echo -n '> '
       cut -d'|' -f2 <<<$line
       task=$(cut -d'|' -f3- <<<$line)
       echo $task
       sed -i /"$task"/d tmp
       if [ "$file" == "-c" ]; then
-        sed -i "s|\b[0]*$num\b|$(echo -e $todo)$num$(echo -e '\033[0m')|g" thisMonth
+        sed -i "s|\b$num\b|$(echo -e $todo)$num$(echo -e '\033[0m')|g" thisMonth
       fi
     done <month
     while read line; do
       num=$(cut -d'|' -f1 <<<$line)
+      num=$((10#$num + 0))
       echo -n '> '
       cut -d'|' -f2 <<<$line
       task=$(cut -d'|' -f3- <<<$line)
       echo $task
       sed -i /"$task"/d tmp
       if [ "$file" == "-c" ]; then
-        sed -i "s|\b[0]*$num\b|$(echo -e $todo)$num$(echo -e '\033[0m')|g" nextMonth
+        sed -i "s|\b$num\b|$(echo -e $todo)$num$(echo -e '\033[0m')|g" nextMonth
       fi
     done <nMonth
     if [ $operation == -O ]; then
