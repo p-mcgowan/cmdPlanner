@@ -270,6 +270,8 @@ case $operation in
       cal $nm $ny >nextMonth
       weekday=$(date +%a)
       weekday=${weekday:0:2}
+      # kill exisitng calendar format
+      sed -i 's/[\x01-\x1F\x7F_]//g' thisMonth
       sed -i "s/\b$d\b/$today$d$clr/g" thisMonth
       sed -i "s/\b$weekday\b/$today$weekday$clr/g" thisMonth
     fi
