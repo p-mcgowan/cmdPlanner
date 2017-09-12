@@ -1,3 +1,6 @@
+#v1.5.4 - Sept, 2017
+  \- Fixed calendar output control character stripping.  
+
 #v1.5.3 - Feb, 2017
   \- Fixed leading zero parsing in dates.  
 
