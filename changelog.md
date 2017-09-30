@@ -1,3 +1,6 @@
+#v1.5.5 - Sept, 2017
+  \- Sort no longer requires leading zeroes.  
+
 #v1.5.4 - Sept, 2017
   \- Fixed calendar output control character stripping.  
 
