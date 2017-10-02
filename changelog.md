@@ -1,3 +1,6 @@
+#v1.5.6 - Oct, 2017
+  \- Fixed find command not searching all files  
+
 #v1.5.5 - Sept, 2017
   \- Sort no longer requires leading zeroes.  
 
