@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 
 debug=true
 if $debug; then
@@ -206,8 +206,10 @@ case $operation in
   --find | -f)
     if ! [ -z "$file" ]; then
       if [ -z "$args" ]; then
-        if ! $(grep -H "$file" $targets); then
-          error "Could not find file '$file'"
+        if ! $(grep -q "$file" $targets); then
+          error "Could not find str '$file'"
+        else
+            grep -H "$file" $targets
         fi
       else
         if ! [ -z $target ]; then
