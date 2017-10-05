@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=true
+debug=false
 if $debug; then
   logfile=~/tmp/$(basename $0)_debug.log
   echo =================================================== >$logfile
@@ -113,6 +113,11 @@ Options
  -h, --help                     Show this menu
 "
 
+helpMessage() {
+  echo "$shortUsage"
+  echo "Type cnotes -h or cnotes --help for more info"
+}
+
 case $operation in
   # -a, --add FILE LINE STR
   # Append - Appends a string onto existing line in text file
@@ -133,7 +138,7 @@ case $operation in
         $args) error "LINE cannot be null" ;;
         $addargs) error "STR cannot be null" ;;
       esac
-      bash $0
+      helpMessage
     fi
   ;;
 
@@ -153,8 +158,9 @@ case $operation in
         $file) error "FILE cannot be null" ;;
         $target) error "Could not find file '$file'" ;;
         $message) error "STR cannot be null" ;;
+        "") error "Something went wrong" ;;
       esac
-      bash $0
+      helpMessage
     fi
   ;;
 
@@ -197,7 +203,7 @@ case $operation in
         $file) error "FILE cannot be null" ;;
         $target) error "Could not find file '$file'" ;;
       esac
-      bash $0
+      helpMessage
     fi
   ;;
 
@@ -222,7 +228,7 @@ case $operation in
       case "" in
         $file) error "STR cannot be null" ;;
       esac
-      bash $0
+      helpMessage
     fi
   ;;
 
@@ -356,7 +362,7 @@ case $operation in
         $target) error "Could not find file '$file'" ;;
         $message) error "ARGS cannot be null" ;;
       esac
-      bash $0
+      helpMessage
     fi
   ;;
 
@@ -385,7 +391,7 @@ case $operation in
         $args) error "STR cannot be null" ;;
         $addargs) error "REPLACE cannot be null" ;;
       esac
-      bash $0
+      helpMessage
     fi
   ;;
 
@@ -410,7 +416,7 @@ case $operation in
         $file) error "FILE cannot be null" ;;
         $target) error "Could not find file '$file'" ;;
       esac
-      bash $0
+      helpMessage
     fi
   ;;
 
@@ -431,7 +437,7 @@ case $operation in
         $file) error "FILE cannot be null" ;;
         $target) error "Could not find file '$file'" ;;
       esac
-      bash $0
+      helpMessage
     fi
   ;;
 
