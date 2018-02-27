@@ -1,3 +1,6 @@
+# v1.5.8 - Feb, 2018
+  \- Calendar / sort output allows more flexible formatting.  
+
 # v1.5.7 - Oct, 2017
   \- Fixed some recursive calls, removed debug flag  
 
