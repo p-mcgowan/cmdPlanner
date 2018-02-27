@@ -9,7 +9,7 @@ if $debug; then
 fi
 
 # Basic scheduling program
-working_dir=~/coursenotes
+working_dir=~/source/coursenotes
 mkdir -p $working_dir/config
 config_file="$working_dir/config/cnotes.conf"
 if [ ! -f $config_file ]; then
@@ -289,36 +289,36 @@ case $operation in
         cat $filename >>tmp
       fi
     done
+    grep -H "\b[MTWRFSU]$short_m[0-9]\{1,2\}\b" $targets >month
+    grep -H "\b[MTWRFSU]$short_nm[0-9]\{1,2\}\b" $targets >nMonth
 
-    grep -H "$short_m[0-9]\{1,2\}$" $targets >month
-    grep -H "$short_nm[0-9]\{1,2\}$" $targets >nMonth
-    sed -i 's|\([^:]*\):\(.*[^0-9$]\)\([0-9]\{1,2\}\)|\3\|\1\|\2\3|g' month nMonth
+    fileGroup="\([^:]*\)"
+    dateGroup="\b\([MTWRFSU]\($short_m\|$short_nm\)\([0-9]\{1,2\}\)\)\b"
+    anyGroup="\(.*\)"
+    # reformat to daynumber:filename:task (\5:\1:\2\3\6)
+    # \1=filename, \2=leading, \3=date, \4=month, \5=day, \6=trailing
+    sed -i "s/${fileGroup}:${anyGroup}${dateGroup}${anyGroup}/\5:\1:\2\3\6/g" month nMonth
+
     sort -V month -o month
-    sort -V nMonth -o nMonth
+    echo '------' >>month
+    sort -V nMonth >> month
+    finput=thisMonth
     while read line; do
-      num=$(cut -d'|' -f1 <<<$line)
-      num=$((10#$num + 0))
-      echo -n '> '
-      cut -d'|' -f2 <<<$line
-      task=$(cut -d'|' -f3- <<<$line)
+      if ! [[ $line =~ (.*):(.*):(.*) ]]; then
+        finput=nextMonth
+        continue
+      fi
+      daynumber=$((10#${BASH_REMATCH[1]} + 0))
+      filename=${BASH_REMATCH[2]}
+      task=${BASH_REMATCH[3]}
+      echo "> $filename"
       echo $task
       sed -i /"$task"/d tmp
       if [ "$file" == "-c" ]; then
-        sed -i "s|\b$num\b|$(echo -e $todo)$num$(echo -e '\033[0m')|g" thisMonth
+        sed -i "s|\b$daynumber\b|$(echo -e $todo)$daynumber$(echo -e '\033[0m')|g" $finput
       fi
     done <month
-    while read line; do
-      num=$(cut -d'|' -f1 <<<$line)
-      num=$((10#$num + 0))
-      echo -n '> '
-      cut -d'|' -f2 <<<$line
-      task=$(cut -d'|' -f3- <<<$line)
-      echo $task
-      sed -i /"$task"/d tmp
-      if [ "$file" == "-c" ]; then
-        sed -i "s|\b$num\b|$(echo -e $todo)$num$(echo -e '\033[0m')|g" nextMonth
-      fi
-    done <nMonth
+
     if [ $operation == -O ]; then
       echo
       echo -n 'Unmateched:'
